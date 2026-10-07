@@ -1,11 +1,11 @@
 ---
 name: implement-spec-task
-description: Implement one task from a QualifAI spec (.claude/specs/NNN/tasks.md) end to end — read spec and ADRs, write tests first at the right level, implement, run make check, tick the task.
+description: Implement one task from a QualifAI spec (docs/specs/NNN/tasks.md) end to end — read spec and ADRs, write tests first at the right level, implement, run make check, tick the task.
 ---
 
 # Implement a spec task
 
-1. **Locate** the task ID (e.g. `T-12`) in `.claude/specs/<NNN>-*/tasks.md`. Search the code for
+1. **Locate** the task ID (e.g. `T-12`) in `docs/specs/<NNN>-*/tasks.md`. Search the code for
    `TODO(spec-<NNN> T-12)` — that is where it plugs in.
 2. **Read** `spec.md` (requirement + acceptance criteria it maps to) and `plan.md` (design notes).
    Read every ADR the plan links. If the task conflicts with an ADR, stop and ask.

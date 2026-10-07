@@ -1,11 +1,11 @@
 ---
 name: write-adr
-description: Record an architecture decision for QualifAI as a numbered ADR (MADR style) in .claude/architecture/adr/, including context, options considered, decision, and consequences.
+description: Record an architecture decision for QualifAI as a numbered ADR (MADR style) in docs/architecture/adr/, including context, options considered, decision, and consequences.
 ---
 
 # Write an ADR
 
-1. Next number = highest in `.claude/architecture/adr/` + 1, zero-padded to 4 digits.
+1. Next number = highest in `docs/architecture/adr/` + 1, zero-padded to 4 digits.
 2. File: `NNNN-short-kebab-title.md` using this template:
    ```markdown
    # ADR-NNNN: <Title>
@@ -23,4 +23,4 @@ description: Record an architecture decision for QualifAI as a numbered ADR (MAD
    ```
 3. Never rewrite an Accepted ADR's decision — supersede it with a new one and update the old
    status line.
-4. Add a row to `.claude/architecture/adr/README.md`.
+4. Add a row to `docs/architecture/adr/README.md`.

@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Bash
 ---
 
 You review changes to QualifAI for architectural fit. Read `CLAUDE.md` and the ADRs in
-`.claude/architecture/adr/` first. Then inspect the diff (`git diff main...`).
+`docs/architecture/adr/` first. Then inspect the diff (`git diff main...`).
 
 Report, most severe first:
 1. Decisions moved into an LLM that should be deterministic (routing, time, scores, verdict).

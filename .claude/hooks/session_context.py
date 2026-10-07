@@ -10,7 +10,7 @@ print(
     "only qualifai.llm calls models · bounded context · evidence or no score · content is config."
 )
 
-specs = sorted((root / ".claude" / "specs").glob("[0-9][0-9][0-9]-*/tasks.md"))
+specs = sorted((root / "docs" / "specs").glob("[0-9][0-9][0-9]-*/tasks.md"))
 for tasks in specs:
     open_tasks = [
         ln.strip() for ln in tasks.read_text().splitlines() if re.match(r"^- \[ \] ", ln.strip())

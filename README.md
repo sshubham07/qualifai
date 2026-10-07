@@ -114,7 +114,7 @@ flowchart LR
 4. **Content is config** — rounds, tiers, role families, skills, problems and model routes are YAML.
 5. **Modular monolith** — split processes only where isolation is needed (API, worker, model server, sandbox).
 
-Full design: [`.claude/architecture/hld.md`](.claude/architecture/hld.md) · decisions: [`ADRs`](.claude/architecture/adr/README.md)
+Full design: [`docs/architecture/hld.md`](docs/architecture/hld.md) · decisions: [`ADRs`](docs/architecture/adr/README.md)
 
 ### Interview lifecycle
 ```mermaid
@@ -326,7 +326,7 @@ flowchart TB
 | Sandbox (V2) | **Judge0** self-hosted; gVisor/Firecracker later | Untrusted code isolated from API and DB |
 | Frontend | Next.js + Monaco (V2) | Thin client; no AI in the browser |
 | Quality | ruff · mypy strict · import-linter · pytest · Hypothesis · testcontainers | Architecture rules enforced by tooling, not reviews |
-| **Not used** | MCP · microservices · Kafka · MongoDB · separate vector DB | No real need yet — see [ADR-0001](.claude/architecture/adr/0001-modular-monolith.md), [ADR-0010](.claude/architecture/adr/0010-no-mcp.md) |
+| **Not used** | MCP · microservices · Kafka · MongoDB · separate vector DB | No real need yet — see [ADR-0001](docs/architecture/adr/0001-modular-monolith.md), [ADR-0010](docs/architecture/adr/0010-no-mcp.md) |
 
 ---
 
@@ -393,9 +393,11 @@ qualifai/
 │   ├── settings.json              # hooks + permissions
 │   ├── hooks/                     # protect files, guard bash, architecture guard, format, fast tests
 │   ├── skills/                    # implement-spec-task, add-round-template, add-skill-seed-bank, ...
-│   ├── agents/                    # architecture-reviewer
+│   └── agents/                    # architecture-reviewer
+├── docs/
 │   ├── architecture/              # overview.md, hld.md, adr/0001..0013
-│   └── specs/                     # 001 MVP (spec → plan → tasks), 002, 003 drafts
+│   ├── specs/                     # 001 MVP (spec → plan → tasks), 002, 003 drafts
+│   └── assets/                    # animated SVGs
 ├── content/                       # rounds/ tiers/ role_families/ skills/ coding_problems/ models.yaml
 ├── src/qualifai/
 │   ├── domain/                    # enums, models, lifecycle, clock — pure
@@ -405,7 +407,7 @@ qualifai/
 │   ├── llm/                       # gateway, router, tasks, prompts/*.md, FakeLLM
 │   ├── content/  db/  api/  workers/  notifications/  storage/  coding/ (V2)
 ├── tests/                         # unit architecture contract integration e2e security evals load
-├── migrations/  docker/  frontend/  scripts/  docs/assets/ (animated SVGs)
+├── migrations/  docker/  frontend/  scripts/
 └── docker-compose.yml  Makefile  pyproject.toml
 ```
 
@@ -435,7 +437,7 @@ This repo is set up for spec-driven, AI-assisted development:
 - **`CLAUDE.md`** holds the golden rules every session follows.
 - **Hooks** stop edits to secrets, destructive commands, and LLM imports in the deterministic core; format edited files; and run fast tests before a session ends.
 - **Skills**: `implement-spec-task`, `add-round-template`, `add-skill-seed-bank`, `add-coding-problem`, `add-llm-task`, `write-adr`.
-- **Specs**: pick a `T-nn` from [`.claude/specs/001-mvp-r1-technical/tasks.md`](.claude/specs/001-mvp-r1-technical/tasks.md); code TODOs reference the same IDs.
+- **Specs**: pick a `T-nn` from [`docs/specs/001-mvp-r1-technical/tasks.md`](docs/specs/001-mvp-r1-technical/tasks.md); code TODOs reference the same IDs.
 
 ---
 

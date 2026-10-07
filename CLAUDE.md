@@ -1,7 +1,7 @@
 # CLAUDE.md — working on QualifAI
 
 QualifAI runs adaptive, resume-aware technical interviews. **The software runs the interview; the
-LLM is a component inside it.** Read `.claude/architecture/overview.md` first, then the active spec.
+LLM is a component inside it.** Read `docs/architecture/overview.md` first, then the active spec.
 
 ## Golden rules (do not break)
 1. **LLM proposes, policy disposes.** Routing, time, difficulty, coverage, scoring aggregation and
@@ -38,7 +38,7 @@ tests/         unit · architecture · contract · integration · e2e · evals �
 `make install` · `make up` · `make api` · `make worker` · `make test` · `make check` · `make evals`
 
 ## How to work here (spec-driven)
-1. Find the task in `.claude/specs/<NNN>/tasks.md` (IDs like `T-12`; code TODOs reference them).
+1. Find the task in `docs/specs/<NNN>/tasks.md` (IDs like `T-12`; code TODOs reference them).
 2. Read the spec's acceptance criteria and the related ADRs before coding.
 3. Write/extend tests at the right level (see `tests/README.md`), then implement.
 4. `make check` must pass. Tick the task. If you made an architectural decision, add an ADR

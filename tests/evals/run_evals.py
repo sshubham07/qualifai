@@ -16,7 +16,7 @@ def main() -> None:
     spec = yaml.safe_load(GOLDEN.read_text())
     print(f"Loaded {len(spec['candidates'])} simulated candidates; metrics: {len(spec['metrics'])}")
     raise SystemExit(
-        "Eval runner not implemented yet — see .claude/specs/001-mvp-r1-technical/tasks.md T-42"
+        "Eval runner not implemented yet — see docs/specs/001-mvp-r1-technical/tasks.md T-42"
     )
 
 
