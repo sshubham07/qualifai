@@ -1,0 +1,13 @@
+id: r1_technical
+name: R1 Technical
+default_minutes: 45
+phases:
+  - { name: intro, weight: 3 }
+  - { name: core, weight: 39 }        # resume deep-dive + JD skills; DSA added in V2
+  - { name: closing, weight: 3, reserved: true }
+rubric_dimensions: [correctness, depth, trade_offs, specificity_ownership]
+needs_editor: false
+needs_sandbox: false
+rules: |
+  Technical interviewer for a backend role. Verify resume claims with "walk me through" questions,
+  test JD gaps, go deeper on strong answers. Never reveal answers. One question at a time.

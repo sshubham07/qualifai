@@ -1,0 +1,13 @@
+skill: api_design
+subtopics:
+  - name: idempotency
+    levels:
+      2: "Knows GET/PUT are idempotent."
+      3: "Designs idempotency keys for POST /payments; stores key + response."
+      4: "Handles concurrent duplicates, key expiry, and partial failures across services."
+    red_flags: ["retries are always safe"]
+  - name: pagination_and_versioning
+    levels:
+      2: "Offset pagination."
+      3: "Cursor pagination and why; URI vs header versioning."
+      4: "Backward-compatible evolution, deprecation strategy, consistency of cursors under writes."

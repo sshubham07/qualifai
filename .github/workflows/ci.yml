@@ -1,0 +1,39 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  fast:
+    name: Lint · Types · Unit · Architecture · Contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      - run: uv run ruff check src tests && uv run ruff format --check src tests
+      - run: uv run lint-imports
+      - run: uv run mypy src
+      - run: uv run pytest -m "unit or architecture or contract" --cov --cov-report=xml
+
+  integration:
+    name: Integration · E2E (fake LLM)
+    needs: fast
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      - run: uv run pytest -m "integration or e2e or security"   # testcontainers starts Postgres/Redis
+
+  evals:
+    name: Judgment evals (manual)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      - run: uv run python -m tests.evals.run_evals
+        env:
+          QUALIFAI_GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

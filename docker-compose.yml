@@ -1,0 +1,75 @@
+# Local development stack. One codebase, two processes (api + worker) — see ADR-0001.
+name: qualifai
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  env_file: .env
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  volumes:
+    - ./content:/app/content:ro
+
+services:
+  api:
+    <<: *app
+    command: uvicorn qualifai.api.main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    profiles: ["app"]
+
+  worker:
+    <<: *app
+    command: arq qualifai.workers.worker.WorkerSettings
+    profiles: ["app"]
+
+  postgres:
+    image: pgvector/pgvector:pg16          # Postgres + pgvector (V2 retrieval) in one image
+    environment:
+      POSTGRES_USER: qualifai
+      POSTGRES_PASSWORD: qualifai
+      POSTGRES_DB: qualifai
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qualifai"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  minio:                                   # S3-compatible object storage for resume PDFs / reports
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  mailpit:                                 # catches "interview ready" / "report ready" emails locally
+    image: axllent/mailpit:latest
+    ports: ["1025:1025", "8025:8025"]
+
+  ollama:                                  # optional local open-weight models
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama:/root/.ollama]
+    profiles: ["llm"]
+
+  # V2 — coding round sandbox. Needs a Linux host (cgroups). Never co-locate with the DB in prod.
+  # judge0:
+  #   image: judge0/judge0:latest
+  #   profiles: ["coding"]
+
+volumes:
+  pgdata:
+  miniodata:
+  ollama:

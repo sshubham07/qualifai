@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" width="900" height="360" role="img" aria-label="Live turn loop: candidate answers, LLM analyses into signals, deterministic policy decides, LLM phrases the next question">
+  <defs>
+    <style>
+      .n{font:700 14px system-ui,sans-serif;fill:#fff}
+      .k{font:600 11px system-ui,sans-serif;fill:#fff;opacity:.9}
+      .m{font:700 17px system-ui,sans-serif;fill:#8b949e}
+      .l{font:600 12px system-ui,sans-serif;fill:#8b949e}
+      .ring{fill:none;stroke:#8b949e;stroke-width:2;stroke-dasharray:4 7;opacity:.6}
+      .node{animation:hl 8s infinite}
+      @keyframes hl{0%,18%{transform:scale(1.07)}22%,100%{transform:scale(1)}}
+      .n1{animation-delay:0s;transform-origin:450px 50px}
+      .n2{animation-delay:1.6s;transform-origin:745px 130px}
+      .n3{animation-delay:3.2s;transform-origin:650px 300px}
+      .n4{animation-delay:4.8s;transform-origin:250px 300px}
+      .n5{animation-delay:6.4s;transform-origin:155px 130px}
+    </style>
+  </defs>
+  <ellipse id="loop" cx="450" cy="180" rx="300" ry="130" class="ring"/>
+  <path id="orbit" d="M450 50 A300 130 0 1 1 449.9 50" fill="none"/>
+  <circle r="8" fill="#fab005" stroke="#fff" stroke-width="2"><animateMotion dur="8s" repeatCount="indefinite"><mpath href="#orbit"/></animateMotion></circle>
+
+  <g class="node n1"><rect x="365" y="25" width="170" height="50" rx="12" fill="#1c7ed6"/>
+    <text x="450" y="47" class="n" text-anchor="middle">Candidate answers</text>
+    <text x="450" y="64" class="k" text-anchor="middle">text · timings · paste flag</text></g>
+  <g class="node n2"><rect x="655" y="105" width="180" height="50" rx="12" fill="#7048e8"/>
+    <text x="745" y="127" class="n" text-anchor="middle">Turn Analyzer · LLM</text>
+    <text x="745" y="144" class="k" text-anchor="middle">signals, not decisions</text></g>
+  <g class="node n3"><rect x="560" y="275" width="180" height="50" rx="12" fill="#2f9e44"/>
+    <text x="650" y="297" class="n" text-anchor="middle">Policy · pure Python</text>
+    <text x="650" y="314" class="k" text-anchor="middle">time + coverage + signals</text></g>
+  <g class="node n4"><rect x="160" y="275" width="180" height="50" rx="12" fill="#7048e8"/>
+    <text x="250" y="297" class="n" text-anchor="middle">Question Gen · LLM</text>
+    <text x="250" y="314" class="k" text-anchor="middle">phrases the chosen action</text></g>
+  <g class="node n5"><rect x="65" y="105" width="180" height="50" rx="12" fill="#495057"/>
+    <text x="155" y="127" class="n" text-anchor="middle">Persist + stream</text>
+    <text x="155" y="144" class="k" text-anchor="middle">Postgres commit · SSE</text></g>
+
+  <text x="450" y="172" class="m" text-anchor="middle">LLM proposes · policy disposes</text>
+  <text x="450" y="196" class="l" text-anchor="middle">bounded context ≤ 2k tokens per call — never the whole transcript</text>
+  <g transform="translate(330,220)">
+    <rect width="12" height="12" rx="3" fill="#7048e8"/><text x="18" y="11" class="l">LLM</text>
+    <rect x="70" width="12" height="12" rx="3" fill="#2f9e44"/><text x="88" y="11" class="l">deterministic code</text>
+  </g>
+</svg>

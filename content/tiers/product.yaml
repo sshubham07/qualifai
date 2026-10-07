@@ -1,0 +1,8 @@
+id: product
+name: Product-based
+difficulty_offset: 1
+max_depth: 3
+challenge_threshold: 0.5
+must_have_floor: 5.0
+bands: { strong_hire: 8.5, hire: 7.5, lean_hire: 6.5, lean_no_hire: 5.5 }
+guidance: Depth, trade-offs, scale and clean extensible design; resume claims are challenged.

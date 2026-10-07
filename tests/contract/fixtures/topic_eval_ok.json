@@ -1,0 +1,4 @@
+{"topic_id": "t1-kubernetes", "skills": ["kubernetes"], "status": "assessed", "question_count": 3,
+ "dimensions": [{"dimension": "depth", "level": 3,
+                 "evidence": [{"turn_seq": 2, "quote": "I wrote the Helm charts myself"}]}],
+ "points_covered": ["autoscaling"], "points_missed": ["PDBs"], "claim_verdict": "verified"}

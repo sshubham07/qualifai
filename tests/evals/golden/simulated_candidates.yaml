@@ -1,0 +1,16 @@
+# Judgement-quality evals. Simulated candidates with KNOWN profiles answer the same interview;
+# the system must rank them correctly and catch the bluffer.
+candidates:
+  - id: strong
+    persona: "4 yrs backend, really built the K8s platform; concrete, first-person, numbers."
+    expected: { kubernetes: ">=7.5", claim_verdict: verified, band_at_product: [lean_hire, hire, strong_hire] }
+  - id: weak
+    persona: "Textbook definitions only; says 'we' a lot; no trade-offs."
+    expected: { kubernetes: "<=5.5", band_at_product: [no_hire, lean_no_hire] }
+  - id: bluffer
+    persona: "Resume says 'designed microservices on Kubernetes' but only deployed with a script someone else wrote; fluent buzzwords."
+    expected: { claim_verdict: [partial, contradicted], challenged_at_least: 1 }
+metrics:
+  - ranking: "strong > weak and strong > bluffer on kubernetes score"
+  - bluffer_caught_rate: ">= 0.8 over 5 runs"
+  - score_stability: "same answers re-scored 3× → max spread <= 1 level"

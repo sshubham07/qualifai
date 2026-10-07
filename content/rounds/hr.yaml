@@ -1,0 +1,12 @@
+id: hr
+name: HR
+default_minutes: 15
+phases:
+  - { name: intro, weight: 2 }
+  - { name: core, weight: 11 }
+  - { name: closing, weight: 2, reserved: true }
+rubric_dimensions: [motivation, clarity, professionalism]
+scored: false                         # feedback only, no hiring band
+rules: |
+  HR conversation: motivation, why this company type, notice period, relocation, expectations.
+  Give feedback on clarity and tone; do not score technical ability.

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 230" width="900" height="230" role="img" aria-label="Three phases: Prep produces an interview kit, Live interview produces a transcript, Evaluation produces the report">
+  <defs>
+    <style>
+      .h{font:700 19px system-ui,sans-serif;fill:#fff}
+      .b{font:500 13px system-ui,sans-serif;fill:#fff;opacity:.92}
+      .c{font:600 12px system-ui,sans-serif;fill:#8b949e}
+      .flow{stroke:#8b949e;stroke-width:2.5;stroke-dasharray:6 6;fill:none;animation:dash 1s linear infinite}
+      @keyframes dash{to{stroke-dashoffset:-12}}
+      .pulse{animation:pulse 3s ease-in-out infinite}
+      .p2{animation-delay:1s}.p3{animation-delay:2s}
+      @keyframes pulse{0%,100%{opacity:1}50%{opacity:.78}}
+    </style>
+  </defs>
+  <g class="pulse"><rect x="15" y="30" width="250" height="125" rx="16" fill="#4263eb"/>
+    <text x="35" y="62" class="h">① Prep</text>
+    <text x="35" y="88" class="b">intake gate · resume/JD extraction</text>
+    <text x="35" y="108" class="b">gap matrix · time-budgeted plan</text>
+    <text x="35" y="128" class="b">topic packs (questions + rubrics)</text></g>
+  <g class="pulse p2"><rect x="325" y="30" width="250" height="125" rx="16" fill="#0ca678"/>
+    <text x="345" y="62" class="h">② Live interview</text>
+    <text x="345" y="88" class="b">question → answer → analyse</text>
+    <text x="345" y="108" class="b">policy decides (time + signals)</text>
+    <text x="345" y="128" class="b">ends naturally ~45 min</text></g>
+  <g class="pulse p3"><rect x="635" y="30" width="250" height="125" rx="16" fill="#e8590c"/>
+    <text x="655" y="62" class="h">③ Evaluation</text>
+    <text x="655" y="88" class="b">per-topic scores + quotes</text>
+    <text x="655" y="108" class="b">evidence check · gates · verdict</text>
+    <text x="655" y="128" class="b">report (HTML) + prep plan</text></g>
+
+  <path id="a1" d="M265 92 H325" class="flow"/>
+  <path id="a2" d="M575 92 H635" class="flow"/>
+  <circle r="7" fill="#4263eb" stroke="#fff" stroke-width="2"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#a1"/></animateMotion></circle>
+  <circle r="7" fill="#0ca678" stroke="#fff" stroke-width="2"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#a2"/></animateMotion></circle>
+
+  <text x="140" y="185" class="c" text-anchor="middle">async worker · large model · minutes</text>
+  <text x="450" y="185" class="c" text-anchor="middle">LangGraph loop · fast models · seconds</text>
+  <text x="760" y="185" class="c" text-anchor="middle">async worker · large model · minutes</text>
+  <text x="295" y="215" class="c" text-anchor="middle">kit → READY (email)</text>
+  <text x="605" y="215" class="c" text-anchor="middle">transcript → report</text>
+</svg>

@@ -1,0 +1,15 @@
+id: r2_lld
+name: R2 Low-Level Design
+default_minutes: 60
+phases:
+  - { name: intro, weight: 2 }
+  - { name: requirements, weight: 8 }
+  - { name: core, weight: 45 }        # classes/interfaces, core code, extensibility follow-ups
+  - { name: closing, weight: 5, reserved: true }
+rubric_dimensions: [entity_modeling, responsibilities, extensibility, code_clarity]
+needs_editor: true
+needs_sandbox: false
+rules: |
+  LLD interviewer. Let the candidate drive requirements, then probe class design and extensibility
+  ("add a new vehicle type"). Prefer simple, interview-realistic designs; do not demand patterns
+  for their own sake.

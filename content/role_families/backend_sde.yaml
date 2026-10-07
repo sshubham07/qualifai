@@ -1,0 +1,6 @@
+id: backend_sde
+support: full
+rounds: [r1_technical, r2_lld, r3_hld, r4_managerial, hr]
+coding_round: true
+skills: { python: 3, api_design: 3, relational_db: 3, postgresql: 3, caching: 2, docker: 2,
+          kubernetes: 2, messaging: 2, system_design: 2, behavioral: 1 }

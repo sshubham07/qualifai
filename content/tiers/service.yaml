@@ -1,0 +1,8 @@
+id: service
+name: Service-based
+difficulty_offset: -1
+max_depth: 2
+challenge_threshold: 0.8
+must_have_floor: 5.0
+bands: { strong_hire: 8.0, hire: 6.5, lean_hire: 5.5, lean_no_hire: 4.5 }
+guidance: Fundamentals, clear project explanation and communication matter most; shallow follow-ups.

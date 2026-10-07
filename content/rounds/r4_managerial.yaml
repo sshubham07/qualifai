@@ -1,0 +1,11 @@
+id: r4_managerial
+name: R4 Managerial
+default_minutes: 30
+phases:
+  - { name: intro, weight: 3 }
+  - { name: core, weight: 22 }
+  - { name: closing, weight: 5, reserved: true }
+rubric_dimensions: [structure_star, ownership, impact, self_awareness, collaboration]
+rules: |
+  Engineering manager. Ask about real projects, conflict, failures and decisions. Probe for what
+  the candidate personally did ("I" vs "we") and measurable outcomes.

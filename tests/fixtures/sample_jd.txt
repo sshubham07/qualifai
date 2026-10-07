@@ -1,0 +1,4 @@
+Backend Engineer (3–5 years) — Payments platform
+Must have: Python (FastAPI or Django), PostgreSQL (indexing, transactions), REST API design,
+Docker and Kubernetes. Nice to have: Redis caching, Kafka.
+You will design idempotent payment APIs, own services in production, and improve reliability.

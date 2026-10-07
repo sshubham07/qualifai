@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QualifAI report — {{ r.round_name }}</title>
+<style>
+  :root{--bg:#fff;--fg:#1d2433;--muted:#5b6475;--card:#f5f7fb;--ok:#1f8a5b;--warn:#b7791f;--bad:#c0392b;--accent:#3b5bdb}
+  @media (prefers-color-scheme:dark){:root{--bg:#11151c;--fg:#e6e9ef;--muted:#9aa3b2;--card:#1a2029}}
+  body{font:15px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:920px;margin:auto;padding:24px 16px}
+  .card{background:var(--card);border-radius:12px;padding:16px 20px;margin:14px 0}
+  .band{font-size:1.4rem;font-weight:700}
+  table{width:100%;border-collapse:collapse} td,th{padding:6px 8px;border-bottom:1px solid #8883;text-align:left}
+  .muted{color:var(--muted)} .q{font-style:italic;color:var(--muted)}
+</style>
+</head>
+<body>
+<h1>Interview report</h1>
+<p class="muted">{{ r.round_name }} · {{ r.tier_name }} bar · {{ r.duration_min }} min ({{ r.end_reason }}) · coverage {{ r.coverage_text }}</p>
+
+<div class="card">
+  <div class="band">{{ r.verdict.label }}</div>
+  <div class="muted">Hiring band: {{ r.verdict.band }}{% if r.verdict.overall %} · overall {{ r.verdict.overall }}/10{% endif %}</div>
+  {% for g in r.verdict.gates_applied %}<div class="muted">Gate applied: {{ g }}</div>{% endfor %}
+  <p>{{ r.narrative.summary }}</p>
+  <p><strong>The gap that would most change your result:</strong> {{ r.narrative.deciding_gap }}</p>
+</div>
+
+<div class="card"><h2>Skill scorecard</h2>
+<table><tr><th>Skill</th><th>Score</th><th>Confidence</th><th>Questions</th></tr>
+{% for s in r.skills %}<tr><td>{{ s.skill }}</td><td>{{ s.score }}/10</td><td>{{ s.confidence }}</td><td>{{ s.questions }}</td></tr>{% endfor %}
+</table></div>
+
+<div class="card"><h2>Resume claims verification</h2>
+<table><tr><th>Claim</th><th>Verdict</th><th>Evidence</th></tr>
+{% for c in r.claims %}<tr><td>{{ c.text }}</td><td>{{ c.verdict }}</td><td class="q">“{{ c.quote }}”</td></tr>{% endfor %}
+</table></div>
+
+<div class="card"><h2>Topic breakdown</h2>
+{% for t in r.topics %}
+  <h3>{{ t.title }} — {{ t.score }}/10 <span class="muted">({{ t.status }})</span></h3>
+  <p><strong>Covered:</strong> {{ t.points_covered | join(", ") }}</p>
+  <p><strong>Missed:</strong> {{ t.points_missed | join(", ") }}</p>
+{% endfor %}</div>
+
+<div class="card"><h2>Strengths</h2><ul>{% for s in r.narrative.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+<h2>Gaps</h2><ul>{% for g in r.narrative.gaps %}<li>{{ g }}</li>{% endfor %}</ul>
+<h2>Two-week prep plan</h2><ol>{% for p in r.narrative.prep_plan %}<li>{{ p }}</li>{% endfor %}</ol></div>
+
+{% if r.verdict.warnings %}<div class="card"><h2>Integrity notes</h2><ul>{% for w in r.verdict.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>{% endif %}
+<p class="muted">Scores are evidence-cited; topics not reached are "not assessed", never zero.</p>
+</body></html>

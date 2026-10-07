@@ -1,0 +1,21 @@
+# V2 example — curated problem with verified tests. LLM may reword framing, never tests.
+id: lru-cache
+title: LRU Cache
+difficulty: medium
+tags: [hashing, linked_list, design]
+role_families: [backend_sde]
+tiers: [midscale, product, faang]
+statement: |
+  Implement an LRUCache(capacity) with get(key) -> int (-1 if missing) and put(key, value).
+  Both operations must run in O(1) average time.
+complexity: { optimal: "O(1) per op, O(capacity) space", acceptable: "O(1)", brute: "O(n) per op" }
+hints:
+  - "Which structure gives O(1) lookup? Which gives O(1) reordering?"
+  - "Combine a hash map with a doubly linked list."
+  - "Map key -> node; move node to head on access; evict tail."
+tests:
+  visible:
+    - { input: "cap=2; put(1,1); put(2,2); get(1); put(3,3); get(2)", output: "1,-1" }
+  hidden_count: 12
+  performance: { ops: 200000, time_limit_s: 2.0 }
+follow_ups: ["Make it thread-safe.", "How would you add TTL per key?"]

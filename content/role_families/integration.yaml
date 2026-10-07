@@ -1,0 +1,5 @@
+id: integration            # e.g. MuleSoft developers — "limited mode", no coding round
+support: partial
+rounds: [r1_technical, r4_managerial, hr]
+coding_round: false
+skills: { api_design: 3, integration_patterns: 3, error_handling: 2, behavioral: 1 }

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 190" width="900" height="190" role="img" aria-label="Flexible time window: normal until 40 min, closing 40-45, overtime 45-50, hard stop at 50">
+  <defs>
+    <style>
+      .z{font:700 13px system-ui,sans-serif;fill:#fff}
+      .t{font:600 12px system-ui,sans-serif;fill:#8b949e}
+      .c{font:500 11.5px system-ui,sans-serif;fill:#8b949e}
+    </style>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#c92a2a"/><rect width="4" height="8" fill="#e03131"/></pattern>
+  </defs>
+  <!-- 0..55 min over x 40..860  (14.909 px / min) -->
+  <rect x="40"  y="60" width="596" height="44" rx="8" fill="#2f9e44"/>
+  <rect x="636" y="60" width="75"  height="44" fill="#f59f00"/>
+  <rect x="711" y="60" width="75"  height="44" fill="#e8590c"/>
+  <rect x="786" y="60" width="74"  height="44" rx="0" fill="url(#hatch)"/>
+  <text x="338" y="87" class="z" text-anchor="middle">NORMAL — interview, follow-ups from spare time only</text>
+  <text x="673" y="87" class="z" text-anchor="middle">CLOSING</text>
+  <text x="748" y="87" class="z" text-anchor="middle">OVERTIME</text>
+  <text x="823" y="87" class="z" text-anchor="middle">STOP</text>
+
+  <g class="t" text-anchor="middle">
+    <text x="40" y="48">0</text><text x="636" y="48">40 soft</text><text x="711" y="48">45 target</text><text x="786" y="48">50 hard</text>
+  </g>
+  <g class="c">
+    <text x="40" y="130">Coverage guard: free = remaining − must-cover minimums − closing reserve</text>
+    <text x="40" y="152">Closing: finish the topic, start only what fits before 50 · Overtime: wrap up, no new topics</text>
+    <text x="40" y="174">Stop: scheduled hard-stop job · the whole window shifts by latency credit (≤ 3 min)</text>
+  </g>
+
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 775 0; 775 0" keyTimes="0;0.85;1" dur="9s" repeatCount="indefinite"/>
+    <line x1="40" y1="54" x2="40" y2="110" stroke="#fff" stroke-width="3"/>
+    <line x1="40" y1="54" x2="40" y2="110" stroke="#1d2433" stroke-width="1"/>
+    <circle cx="40" cy="54" r="6" fill="#fab005" stroke="#fff" stroke-width="2"/>
+  </g>
+</svg>

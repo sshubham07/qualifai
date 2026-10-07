@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 170" width="900" height="170" role="img" aria-label="QualifAI — adaptive technical interviews run by software, not just a prompt">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#4263eb"/><stop offset="0.5" stop-color="#0ca678"/><stop offset="1" stop-color="#f08c00"/>
+    </linearGradient>
+    <style>
+      .t{font:700 54px system-ui,-apple-system,Segoe UI,sans-serif;fill:url(#g)}
+      .s{font:500 18px system-ui,-apple-system,Segoe UI,sans-serif;fill:#8b949e}
+      .cur{animation:blink 1s steps(1) infinite}
+      @keyframes blink{50%{opacity:0}}
+      .bar{animation:grow 3.5s ease-in-out infinite alternate;transform-origin:150px 140px}
+      @keyframes grow{from{transform:scaleX(.15)}to{transform:scaleX(1)}}
+    </style>
+  </defs>
+  <text x="150" y="80" class="t">QualifAI</text>
+  <rect x="380" y="40" width="5" height="46" fill="#0ca678" class="cur"/>
+  <text x="150" y="115" class="s">Adaptive, resume-aware technical interviews — run by software, not just a prompt.</text>
+  <rect x="150" y="136" width="600" height="6" rx="3" fill="url(#g)" class="bar"/>
+</svg>

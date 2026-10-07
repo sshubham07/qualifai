@@ -1,0 +1,4 @@
+{"intent": "answer", "rubric_points_covered": ["HPA on CPU", "cluster DNS"],
+ "rubric_points_missing": ["pod disruption budgets"], "coverage_ratio": 0.67,
+ "specificity": "high", "consistency": "consistent",
+ "hooks": ["wrote Helm charts"], "proposed_follow_up": "How did you roll back a bad release?"}

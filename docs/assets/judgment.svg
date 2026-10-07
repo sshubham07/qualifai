@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" width="900" height="250" role="img" aria-label="Judgement pipeline: per-topic scores with quotes, evidence check drops hallucinated quotes, code aggregates and applies gates, verdict computed, LLM only explains">
+  <defs>
+    <style>
+      .h{font:700 13.5px system-ui,sans-serif;fill:#fff}
+      .k{font:600 11px system-ui,sans-serif;fill:#fff;opacity:.9}
+      .c{font:600 12px system-ui,sans-serif;fill:#8b949e}
+      .flow{stroke:#8b949e;stroke-width:2;fill:none;stroke-dasharray:5 6;animation:d 1s linear infinite}
+      @keyframes d{to{stroke-dashoffset:-11}}
+    </style>
+  </defs>
+  <g>
+    <rect x="10"  y="40" width="150" height="62" rx="12" fill="#7048e8"/><text x="85" y="66" class="h" text-anchor="middle">Topic eval · LLM</text><text x="85" y="85" class="k" text-anchor="middle">level 1–4 + quotes</text>
+    <rect x="190" y="40" width="150" height="62" rx="12" fill="#2f9e44"/><text x="265" y="66" class="h" text-anchor="middle">Evidence check</text><text x="265" y="85" class="k" text-anchor="middle">quote really said?</text>
+    <rect x="370" y="40" width="150" height="62" rx="12" fill="#2f9e44"/><text x="445" y="66" class="h" text-anchor="middle">Aggregate</text><text x="445" y="85" class="k" text-anchor="middle">topics → skills · /10</text>
+    <rect x="550" y="40" width="150" height="62" rx="12" fill="#2f9e44"/><text x="625" y="66" class="h" text-anchor="middle">Gates + tier bar</text><text x="625" y="85" class="k" text-anchor="middle">coverage · must-have</text>
+    <rect x="730" y="40" width="160" height="62" rx="12" fill="#e8590c"/><text x="810" y="66" class="h" text-anchor="middle">Verdict</text><text x="810" y="85" class="k" text-anchor="middle">LLM only explains it</text>
+  </g>
+  <path d="M160 71 H190 M340 71 H370 M520 71 H550 M700 71 H730" class="flow"/>
+  <path id="ok" d="M85 125 H810" fill="none"/>
+  <path id="bad" d="M85 125 H265 V205" fill="none"/>
+  <rect x="215" y="195" width="100" height="34" rx="8" fill="none" stroke="#e03131" stroke-dasharray="4 4"/>
+  <text x="265" y="245" class="c" text-anchor="middle">dropped: never said</text>
+  <g><circle r="8" fill="#2f9e44" stroke="#fff" stroke-width="2"/><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#ok"/></animateMotion></g>
+  <g><circle r="8" fill="#2f9e44" stroke="#fff" stroke-width="2"/><animateMotion dur="5s" begin="1.6s" repeatCount="indefinite"><mpath href="#ok"/></animateMotion></g>
+  <g><circle r="8" fill="#e03131" stroke="#fff" stroke-width="2"/><animateMotion dur="3s" begin="0.8s" repeatCount="indefinite"><mpath href="#bad"/></animateMotion></g>
+  <text x="610" y="160" class="c" text-anchor="middle">evidence-cited quotes flow on · invented quotes are removed</text>
+</svg>

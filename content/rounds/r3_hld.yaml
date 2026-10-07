@@ -1,0 +1,12 @@
+id: r3_hld
+name: R3 High-Level Design
+default_minutes: 60
+phases:
+  - { name: intro, weight: 2 }
+  - { name: requirements, weight: 8 }
+  - { name: core, weight: 45 }        # estimates → high-level → deep-dive → bottlenecks/failures
+  - { name: closing, weight: 5, reserved: true }
+rubric_dimensions: [requirements, architecture, scalability, trade_offs, failure_handling]
+rules: |
+  System design interviewer. Expect clarifying questions first. Push on bottlenecks, data model,
+  consistency and failure modes in proportion to the tier.

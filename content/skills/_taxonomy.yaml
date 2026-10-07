@@ -1,0 +1,17 @@
+# alias → canonical skill id. Dictionary first; embeddings only as a fallback (V2).
+skills:
+  python: { aliases: [python3, py] }
+  fastapi: { aliases: [fast api], parent: python }
+  django: { aliases: [django rest framework, drf], parent: python }
+  api_design: { aliases: [rest, rest api, restful, api, http apis, grpc] }
+  relational_db: { aliases: [sql, rdbms, relational databases] }
+  postgresql: { aliases: [postgres, psql, postgre sql], parent: relational_db }
+  mysql: { aliases: [my sql, mariadb], parent: relational_db }
+  caching: { aliases: [redis, memcached, cache] }
+  docker: { aliases: [containers, containerization] }
+  kubernetes: { aliases: [k8s, eks, gke, aks] }
+  messaging: { aliases: [kafka, rabbitmq, sqs, message queue, pub/sub] }
+  system_design: { aliases: [distributed systems, scalability, microservices] }
+  integration_patterns: { aliases: [mulesoft, anypoint, esb, dataweave] }
+  error_handling: { aliases: [retries, idempotency] }
+  behavioral: { aliases: [communication, leadership, teamwork] }

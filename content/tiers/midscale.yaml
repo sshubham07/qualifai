@@ -1,0 +1,8 @@
+id: midscale
+name: Mid-scale / startup
+difficulty_offset: 0
+max_depth: 3
+challenge_threshold: 0.6
+must_have_floor: 5.0
+bands: { strong_hire: 8.2, hire: 7.0, lean_hire: 6.0, lean_no_hire: 5.0 }
+guidance: Practical problem solving, ownership and speed; working designs over perfect ones.

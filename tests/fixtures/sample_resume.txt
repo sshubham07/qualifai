@@ -1,0 +1,3 @@
+Backend Engineer, 3.5 years. Designed microservices using Kubernetes for a fintech platform;
+built FastAPI services handling 2k req/s; used PostgreSQL; added Redis caching that reduced p95
+latency by 40%; set up CI/CD with GitHub Actions; mentored two junior engineers.

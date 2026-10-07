@@ -1,0 +1,8 @@
+id: faang
+name: FAANG-style
+difficulty_offset: 2
+max_depth: 4
+challenge_threshold: 0.4
+must_have_floor: 5.5
+bands: { strong_hire: 8.8, hire: 8.0, lean_hire: 7.0, lean_no_hire: 6.0 }
+guidance: Highest bar — rigorous problem solving, large-scale design, crisp trade-off reasoning.

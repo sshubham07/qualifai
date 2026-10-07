@@ -1,0 +1,25 @@
+# Seed bank: reference anchors the prep LLM adapts into personalised questions + rubrics.
+skill: postgresql
+parent: relational_db
+subtopics:
+  - name: indexing
+    levels:
+      1: "Knows indexes 'make queries faster'; cannot say when they don't help."
+      2: "B-tree basics, composite index column order, cost on writes."
+      3: "Chooses index types (B-tree, GIN, partial, covering) for concrete queries; reads EXPLAIN."
+      4: "Diagnoses a slow query end-to-end with EXPLAIN ANALYZE; trade-offs incl. bloat and write amplification."
+    red_flags: ["index every column", "indexes have no cost"]
+    follow_ups: ["How would you index WHERE status = 'active' AND created_at > now() - interval '1 day'?",
+                 "When would Postgres ignore your index?"]
+  - name: transactions_isolation
+    levels:
+      1: "Transactions are all-or-nothing; nothing on isolation."
+      2: "Names isolation levels; vague on anomalies."
+      3: "Explains MVCC, read committed vs repeatable read, lost update; uses SELECT ... FOR UPDATE."
+      4: "Picks isolation per use case (payments), handles serialization failures with retries."
+    red_flags: ["serializable everywhere", "locks are never needed with MVCC"]
+  - name: query_planning
+    levels:
+      2: "Knows EXPLAIN exists."
+      3: "Reads seq scan vs index scan, row estimates, join types."
+      4: "Fixes bad estimates (ANALYZE, statistics), rewrites queries, understands work_mem effects."
