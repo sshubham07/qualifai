@@ -1,4 +1,6 @@
-"""Job: build the interview kit, mark READY (+ expires_at = now + 7d), send 'ready' email."""
+"""Job: run the intake gate, build the interview kit, mark READY (+ expires_at = now + 7d) and,
+if an email was given, send the 'ready' email. Anything that stops prep leaves the interview FAILED
+with a reason."""
 
 from __future__ import annotations
 
@@ -11,17 +13,21 @@ from typing import Any
 from uuid import UUID
 
 import structlog
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from qualifai.config.settings import get_settings
-from qualifai.db.models import Interview, InterviewKit, User
+from qualifai.db.models import Interview, InterviewEvent, InterviewKit, User
 from qualifai.db.session import SessionFactory
 from qualifai.domain.clock import Clock, SystemClock
-from qualifai.domain.enums import CompanyTier, InterviewStatus, RoundType
+from qualifai.domain.enums import CompanyTier, FailureCode, InterviewStatus, RoundType
+from qualifai.domain.errors import LLMOutputError
+from qualifai.domain.failures import FAILURE_REASONS
 from qualifai.domain.lifecycle import transition
 from qualifai.domain.models import InterviewRequest
 from qualifai.llm.gateway import LLM
 from qualifai.notifications.email import send_kit_ready
+from qualifai.prep.intake_gate import decide, run_intake
 from qualifai.prep.pipeline import PreparedKit, prepare_kit
 
 log = structlog.get_logger(__name__)
@@ -54,17 +60,40 @@ def _request(interview: Interview) -> InterviewRequest:
     )
 
 
-async def _fail(session: AsyncSession, interview: Interview, reason: str) -> None:
+async def _fail(session: AsyncSession, interview: Interview, code: FailureCode) -> None:
     interview.status = transition(InterviewStatus.PREPARING, InterviewStatus.FAILED).value
+    interview.failure_code = code.value
+    interview.failure_reason = FAILURE_REASONS[code]
     await session.commit()
-    log.error("prep.failed", interview_id=str(interview.id), reason=reason)
+    log.warning("prep.failed", interview_id=str(interview.id), code=code.value)
+
+
+async def _passes_gate(
+    session: AsyncSession, llm: LLM, interview: Interview, req: InterviewRequest
+) -> bool:
+    """Both documents must be for a software role; otherwise FAILED with the reason (ADR-0016)."""
+    try:
+        intake = await run_intake(llm, req)
+    except (ValidationError, LLMOutputError):  # no usable classification after the retries
+        await _fail(session, interview, FailureCode.UNDECIDED)
+        return False
+    interview.role_family = intake.jd_role_family.value
+    if intake.injection_suspected:  # flagged, not obeyed (spec-001 FR-2)
+        session.add(InterviewEvent(interview_id=interview.id, type="injection_suspected"))
+    verdict = decide(intake)
+    if isinstance(verdict, FailureCode):
+        await _fail(session, interview, verdict)
+        return False
+    interview.support_level = verdict.value
+    await session.commit()  # the detected role is visible while the kit is being built
+    return True
 
 
 async def prepare_interview(session: AsyncSession, deps: PrepDeps, interview_id: UUID) -> None:
     interview = await session.get(Interview, interview_id)
     if interview is None or interview.status != InterviewStatus.PREPARING:
         return  # duplicate or stale job — nothing to prepare
-    user = await session.get_one(User, interview.user_id)
+    user = await session.get_one(User, interview.user_id) if interview.user_id else None
 
     steps: list[str] = []
 
@@ -72,16 +101,21 @@ async def prepare_interview(session: AsyncSession, deps: PrepDeps, interview_id:
         steps.append(step)
         log.info("prep.progress", interview_id=str(interview_id), step=step)
 
+    req = _request(interview)
     try:
-        kit: PreparedKit = await prepare_kit(deps.llm, _request(interview), progress)
-    except Exception as exc:
-        await _fail(session, interview, type(exc).__name__)
+        await progress("Checking resume and job description")
+        if not await _passes_gate(session, deps.llm, interview, req):
+            return
+        kit: PreparedKit = await prepare_kit(deps.llm, req, progress)
+    except Exception:
+        await _fail(session, interview, FailureCode.PREP_ERROR)
         raise
     if not kit.plan.topics:
-        await _fail(session, interview, "no_known_skills_in_jd")
+        await _fail(session, interview, FailureCode.NO_KNOWN_SKILLS)
         return
 
-    token = secrets.token_urlsafe(32)  # magic link; only the hash is stored
+    # Magic link, only when there is an email to send it to; only the hash is stored.
+    token = secrets.token_urlsafe(32) if user else None
     ready_at = deps.clock.now()
     expires_at = ready_at + timedelta(days=deps.kit_ttl_days)
     await session.merge(  # merge: a retried job overwrites its own earlier kit
@@ -95,11 +129,12 @@ async def prepare_interview(session: AsyncSession, deps: PrepDeps, interview_id:
     interview.status = transition(InterviewStatus.PREPARING, InterviewStatus.READY).value
     interview.ready_at = ready_at
     interview.expires_at = expires_at
-    interview.access_token_hash = hash_token(token)
+    interview.access_token_hash = hash_token(token) if token else None
     await session.commit()
 
-    link = f"{deps.base_url}/interviews/{interview.id}?token={token}"
-    await deps.send_ready(user.email, link, expires_at.date().isoformat())
+    if user and token:  # without an email the candidate checks back with the meet id
+        link = f"{deps.base_url}/interviews/{interview.id}?token={token}"
+        await deps.send_ready(user.email, link, expires_at.date().isoformat())
 
 
 async def prepare_interview_job(ctx: dict[str, Any], interview_id: str) -> None:

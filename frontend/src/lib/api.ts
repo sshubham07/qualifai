@@ -34,7 +34,6 @@ export const LIMITS = {
 };
 
 export type InterviewInput = {
-  email: string;
   resume_text: string;
   jd_text: string;
   company_tier: CompanyType;
@@ -54,13 +53,15 @@ export type InterviewStatus =
   | "expired";
 
 export type Accepted = {
-  interview_id: string;
+  meet_id: string; // the interview id; keep it to check back on the interview
   status: InterviewStatus;
-  detected_role: string;
-  support: string;
 };
 
 export type StatusOut = Accepted & {
+  detected_role: string | null; // known once the resume and job description have been checked
+  support: string | null;
+  failure_code: string | null;
+  failure_reason: string | null;
   progress: string[];
   expires_at: string | null;
   server_now: string;
@@ -91,7 +92,6 @@ export class ApiError extends Error {
 const FIELD_LABELS: Record<string, string> = {
   resume_text: "Resume",
   jd_text: "Job description",
-  email: "Email",
   company_tier: "Company type",
   experience_min_years: "Experience",
   experience_max_years: "Experience",
@@ -100,7 +100,7 @@ const FIELD_LABELS: Record<string, string> = {
 async function errorFrom(res: Response): Promise<ApiError> {
   const body = await res.json().catch(() => null);
   if (typeof body?.message === "string") {
-    return new ApiError(body.message, res.status); // domain errors: unsupported role, invalid document
+    return new ApiError(body.message, res.status); // domain errors
   }
   const first = Array.isArray(body?.detail) ? body.detail[0] : null;
   if (first?.msg) {

@@ -49,6 +49,18 @@ class InterviewStatus(StrEnum):
     EXPIRED = "expired"
 
 
+class FailureCode(StrEnum):
+    """Why an interview is FAILED. Stored on the interview and shown to the candidate."""
+
+    NOT_A_RESUME = "not_a_resume"
+    NOT_A_JD = "not_a_jd"
+    RESUME_NOT_SOFTWARE = "resume_not_software"
+    JD_NOT_SOFTWARE = "jd_not_software"
+    UNDECIDED = "undecided"  # the intake model was unsure or returned nothing usable
+    NO_KNOWN_SKILLS = "no_known_skills"
+    PREP_ERROR = "prep_error"
+
+
 class EndReason(StrEnum):
     NATURAL = "natural"
     EARLY_COMPLETE = "early_complete"

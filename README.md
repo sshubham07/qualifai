@@ -29,6 +29,8 @@
 | 🎯 **About you** | Cross-questions *your* resume claims against what the *JD* needs. |
 | 🔍 **Evidence or no score** | Every score cites a quote that is checked against the transcript. |
 | 🏢 **Company-aware** | Service · startup · product · MAANG bars. |
+| 🚦 **Software roles only** | A small local model checks the resume and the JD first. If either isn't software, it stops and says why. |
+| 🔗 **No sign-up** | Paste and go. You get a Meet ID to check whether your interview is preparing or ready. |
 
 <details>
 <summary><b>🔁 Watch one turn</b></summary>

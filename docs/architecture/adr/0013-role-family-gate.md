@@ -1,6 +1,6 @@
 # ADR-0013: Role-family intake gate; Backend SDE only in MVP
 
-- Status: Accepted
+- Status: Accepted; where and how the gate runs is superseded by ADR-0016
 - Date: 2026-10-07
 
 ## Context

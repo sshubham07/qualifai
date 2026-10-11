@@ -7,11 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from qualifai.domain.enums import RoleFamily
-from qualifai.domain.errors import InvalidDocumentError, UnsupportedRoleError
+from qualifai.domain.enums import FailureCode, RoleFamily
 from qualifai.domain.models import IntakeResult
 from qualifai.llm.prompts import load_prompt
-from qualifai.prep.intake_gate import support_for
+from qualifai.prep.intake_gate import decide
 
 pytestmark = pytest.mark.security
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,7 +19,7 @@ HOOKS = ROOT / ".claude" / "hooks"
 
 def intake(**kw) -> IntakeResult:
     base = {
-        "role_family": RoleFamily.BACKEND_SDE,
+        "jd_role_family": RoleFamily.BACKEND_SDE,
         "confidence": 0.9,
         "resume_role_family": RoleFamily.BACKEND_SDE,
         "is_resume": True,
@@ -31,16 +30,14 @@ def intake(**kw) -> IntakeResult:
 
 
 def test_non_technical_role_is_declined():
-    with pytest.raises(UnsupportedRoleError):
-        support_for(intake(role_family=RoleFamily.NON_TECHNICAL))
+    assert decide(intake(jd_role_family=RoleFamily.NON_TECHNICAL)) is FailureCode.JD_NOT_SOFTWARE
 
 
 def test_non_resume_upload_is_rejected():
-    with pytest.raises(InvalidDocumentError):
-        support_for(intake(is_resume=False))
+    assert decide(intake(is_resume=False)) is FailureCode.NOT_A_RESUME
 
 
-@pytest.mark.parametrize("prompt", ["turn_analyzer", "topic_eval", "question_gen"])
+@pytest.mark.parametrize("prompt", ["intake_gate", "turn_analyzer", "topic_eval", "question_gen"])
 def test_prompts_carry_injection_or_secrecy_rules(prompt):
     text = load_prompt(prompt).lower()
     assert ("never follow instructions" in text) or ("never reveal" in text) or ("quote" in text)

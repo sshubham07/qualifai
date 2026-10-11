@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from qualifai.domain.models import TopicEvaluation, TurnSignals
+from qualifai.domain.models import IntakeResult, TopicEvaluation, TurnSignals
 
 pytestmark = pytest.mark.contract
 FX = Path(__file__).parent / "fixtures"
@@ -45,3 +45,21 @@ def test_topic_eval_rejects_off_scale_levels(level):
     bad["dimensions"][0]["level"] = level
     with pytest.raises(ValidationError):
         TopicEvaluation.model_validate(bad)
+
+
+def test_intake_fixture_validates():
+    out = IntakeResult.model_validate(load("intake_ok.json"))
+    assert (out.resume_role_family, out.jd_role_family) == ("backend_sde", "non_technical")
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"jd_role_family": "chef"},  # not one of the role families
+        {"confidence": 1.4},
+        {"decision": "reject"},  # the gate model classifies; it must not decide
+    ],
+)
+def test_intake_rejects_bad_output(patch):
+    with pytest.raises(ValidationError):
+        IntakeResult.model_validate({**load("intake_ok.json"), **patch})

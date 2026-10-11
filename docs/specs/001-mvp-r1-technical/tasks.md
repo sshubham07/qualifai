@@ -13,15 +13,16 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-08 Architecture tests (import rules) + import-linter contracts
 
 ## Prep (Phase 1)
-- [x] T-10 `prepare_interview_job`: load request, call `prepare_kit`, persist kit, READY, email
+- [x] T-10 `prepare_interview_job`: load request, call `prepare_kit`, persist kit, READY, email (only if an email was given, ADR-0017)
 - [ ] T-11 Contract tests for ResumeExtraction / JDExtraction / TopicPack with recorded fixtures
 - [x] T-12 Seed-bank anchors loaded into topic-pack prompts
 - [ ] T-13 Progressive readiness (FR-9): mark startable after intro + 2 packs
 - [ ] T-14 Log unknown skills / unsupported roles to `demand_log`
 - [ ] T-15 Prep progress → Redis pub/sub → SSE
+- [x] T-16 Intake gate as the first prep step (ADR-0016): resume and JD must both be software roles; FAILED with `failure_code` + reason shown on the status page
 
 ## API & live loop (Phase 2)
-- [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue)
+- [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue; returns `meet_id`)
 - [x] T-21 `GET /v1/interviews/{id}` with `server_now`
 - [ ] T-22 `POST /start` (auth, window, schedule hard stop, first question)
 - [ ] T-23 `POST /answers` (integrity events, resume graph, enqueue eval on end)
@@ -34,7 +35,7 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [ ] T-30 `evaluate_interview_job` → report JSON stored
 - [ ] T-31 Contract test for TopicEvaluation (quotes required)
 - [ ] T-32 Report HTML render + object storage + `GET /report`
-- [ ] T-33 Report-ready email
+- [ ] T-33 Report-ready email (deferred with email delivery, ADR-0017)
 
 ## Ops
 - [ ] T-40 `expire_kits` daily sweep + resume deletion

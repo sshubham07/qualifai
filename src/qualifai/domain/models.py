@@ -45,11 +45,13 @@ class InterviewRequest(Frozen):
 
 
 class IntakeResult(Frozen):
-    role_family: RoleFamily
-    confidence: float = Field(ge=0, le=1)
-    resume_role_family: RoleFamily
+    """Structured output of the intake gate (LLM). A classification only — code decides."""
+
     is_resume: bool
     is_jd: bool
+    resume_role_family: RoleFamily
+    jd_role_family: RoleFamily
+    confidence: float = Field(ge=0, le=1)
     injection_suspected: bool = False
 
 

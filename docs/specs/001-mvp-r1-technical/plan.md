@@ -18,9 +18,10 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 
 | Jobs | `workers/jobs/*` | arq |
 
 ## Key flows
-1. `POST /v1/interviews` (JSON: resume text, JD text, tier, experience range) → `run_intake` (sync) → dedupe by input hash →
+1. `POST /v1/interviews` (JSON: resume text, JD text, tier, experience range) → dedupe by input hash →
    SUBMITTED→PREPARING → enqueue `prepare_interview_job`.
-2. Worker: `prepare_kit` (progress → Redis pub/sub → SSE) → kit stored → READY → email.
+2. Worker: intake gate (`run_intake` → `decide`; a rejection is FAILED with a reason, ADR-0016) →
+   `prepare_kit` (progress → Redis pub/sub → SSE) → kit stored → READY → email.
 3. `POST /start`: TimeWindow.for_duration → persist window → schedule `hard_stop_job` at
    hard_end + 60 s → `InterviewService.start` → first question.
 4. `POST /answers`: integrity events → `submit_answer` (graph resumes) → next question or end →

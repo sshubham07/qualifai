@@ -41,12 +41,14 @@ class User(Base, Timestamped):
 class Interview(Base, Timestamped):
     __tablename__ = "interviews"
     id: Mapped[UUID] = mapped_column(primary_key=True)  # UUIDv7 (time-ordered)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"), index=True
+    )  # no email → None
     status: Mapped[str] = mapped_column(String(32), index=True)
     round_type: Mapped[str] = mapped_column(String(32))
     company_tier: Mapped[str] = mapped_column(String(32))
     role_family: Mapped[str] = mapped_column(String(32))
-    support_level: Mapped[str] = mapped_column(String(16))
+    support_level: Mapped[str | None] = mapped_column(String(16))  # set by the intake gate
     target_minutes: Mapped[int] = mapped_column(Integer)
     input_hash: Mapped[str] = mapped_column(String(64), index=True)  # reuse kits for same inputs
     resume_text: Mapped[str | None] = mapped_column(Text)  # nulled after completion / expiry
@@ -63,6 +65,8 @@ class Interview(Base, Timestamped):
     latency_credit_s: Mapped[int] = mapped_column(Integer, default=0)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     end_reason: Mapped[str | None] = mapped_column(String(32))
+    failure_code: Mapped[str | None] = mapped_column(String(32))  # FailureCode when FAILED
+    failure_reason: Mapped[str | None] = mapped_column(Text)  # the sentence shown to the candidate
     access_token_hash: Mapped[str | None] = mapped_column(String(128))  # magic-link fallback
 
 

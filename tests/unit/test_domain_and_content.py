@@ -1,14 +1,21 @@
 import pytest
 
 from qualifai.content.loader import role_family, round_template, skill_aliases, tier_preset
-from qualifai.domain.enums import CompanyTier, InterviewStatus, RoleFamily, RoundType, SupportLevel
+from qualifai.domain.enums import (
+    CompanyTier,
+    FailureCode,
+    InterviewStatus,
+    RoleFamily,
+    RoundType,
+    SupportLevel,
+)
 from qualifai.domain.errors import InterviewStateError
 from qualifai.domain.lifecycle import transition
 from qualifai.domain.models import IntakeResult
 from qualifai.interview.skill_estimates import clamp_difficulty, update_estimate
 from qualifai.llm.router import ModelRouter
 from qualifai.llm.tasks import LLMTask
-from qualifai.prep.intake_gate import heuristic_injection, support_for
+from qualifai.prep.intake_gate import decide, heuristic_injection
 from qualifai.prep.taxonomy import normalize_skill
 
 pytestmark = pytest.mark.unit
@@ -56,14 +63,14 @@ def test_models_yaml_routes_every_task():
 
 def _intake(fam: RoleFamily, conf: float = 0.9) -> IntakeResult:
     return IntakeResult(
-        role_family=fam, confidence=conf, resume_role_family=fam, is_resume=True, is_jd=True
+        jd_role_family=fam, confidence=conf, resume_role_family=fam, is_resume=True, is_jd=True
     )
 
 
 def test_support_levels():
-    assert support_for(_intake(RoleFamily.BACKEND_SDE)) is SupportLevel.FULL
-    assert support_for(_intake(RoleFamily.INTEGRATION)) is SupportLevel.PARTIAL
-    assert support_for(_intake(RoleFamily.BACKEND_SDE, conf=0.3)) is SupportLevel.PARTIAL
+    assert decide(_intake(RoleFamily.BACKEND_SDE)) is SupportLevel.FULL
+    assert decide(_intake(RoleFamily.INTEGRATION)) is SupportLevel.PARTIAL
+    assert decide(_intake(RoleFamily.BACKEND_SDE, conf=0.3)) is FailureCode.UNDECIDED
     assert role_family(RoleFamily.NON_TECHNICAL) is not None
 
 

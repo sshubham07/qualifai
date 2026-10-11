@@ -75,7 +75,6 @@ function StartForm() {
   const [company, setCompany] = useState<CompanyType | null>(null);
   const [minYears, setMinYears] = useState("");
   const [maxYears, setMaxYears] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
@@ -89,14 +88,13 @@ function StartForm() {
     setSending(true);
     try {
       const accepted = await createInterview({
-        email: email.trim(),
         resume_text: resume.trim(),
         jd_text: jd.trim(),
         company_tier: company,
         experience_min_years: Number(minYears),
         experience_max_years: Number(maxYears),
       });
-      navigate(`/interviews/${accepted.interview_id}`);
+      navigate(`/interviews/${accepted.meet_id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setSending(false);
@@ -202,22 +200,6 @@ function StartForm() {
         </div>
       </Section>
 
-      <Section step={5} title="Where should we send your link?" hint="We email you when the interview is ready.">
-        <label htmlFor="email" className="sr-only">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className={`${inputClass} w-full max-w-sm`}
-        />
-      </Section>
-
       {error && (
         <p role="alert" className="rounded-xl border border-danger/20 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
@@ -231,7 +213,7 @@ function StartForm() {
           className="inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3 font-medium text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-70"
         >
           {sending && <Spinner className="size-4" />}
-          {sending ? "Checking the role…" : "Prepare my interview"}
+          {sending ? "Submitting…" : "Prepare my interview"}
         </button>
         <p className="text-sm text-muted">A 45-minute technical round. Preparation takes a few minutes.</p>
       </div>
@@ -244,8 +226,9 @@ export function Start() {
     <div className="mx-auto w-full max-w-3xl px-5 py-12">
       <h1 className="text-3xl font-semibold tracking-tight">Start an interview</h1>
       <p className="mt-2 text-muted">
-        Tell us about you and the role. We check the role is one we support
-        straight away, then prepare your interview in the background.
+        Tell us about you and the role. We first check that the resume and the
+        job description are both for a software engineering role, then prepare
+        your interview in the background.
       </p>
       <StartForm />
     </div>

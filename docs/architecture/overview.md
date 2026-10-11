@@ -31,7 +31,7 @@ It is **not a RAG application.** Retrieval appears only as a supporting componen
 ## The three phases
 | Phase | Trigger | Output | Mode |
 |---|---|---|---|
-| 1. Prep | Submission accepted by intake gate | Interview kit (plan + topic packs), status READY, email | async worker, large model |
+| 1. Prep | Submission accepted by intake gate | Interview kit (plan + topic packs), status READY, email if one was given (ADR-0017) | async worker, large model |
 | 2. Live interview | Candidate starts within 7 days | Append-only transcript + per-turn signals | LangGraph loop, fast models |
 | 3. Evaluation | Interview ends (natural / hard stop) | Report JSON + rendered HTML, email | async worker, large model |
 

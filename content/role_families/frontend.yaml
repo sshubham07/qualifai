@@ -1,0 +1,5 @@
+id: frontend            # software role near backend — "limited mode", no coding round (ADR-0013)
+support: partial
+rounds: [r1_technical, r4_managerial, hr]
+coding_round: false
+skills: {}

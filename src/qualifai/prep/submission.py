@@ -1,7 +1,7 @@
 """Interview submission — the application service behind POST /v1/interviews (spec-001 T-20).
 
-Intake gate first (nothing is stored or enqueued for an unsupported role), then dedupe by input
-hash, then persist as PREPARING and enqueue the prep job.
+Dedupe by input hash, persist as PREPARING and enqueue the prep job. No model call here: the
+intake gate is the job's first step (ADR-0016), so a rejection is a FAILED interview with a reason.
 """
 
 from __future__ import annotations
@@ -14,13 +14,11 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid6 import uuid7
 
-from qualifai.db.models import Interview, InterviewEvent, User
+from qualifai.db.models import Interview, User
 from qualifai.domain.clock import Clock
-from qualifai.domain.enums import InterviewStatus, RoleFamily, SupportLevel
+from qualifai.domain.enums import InterviewStatus, RoleFamily
 from qualifai.domain.lifecycle import transition
 from qualifai.domain.models import Frozen, InterviewRequest
-from qualifai.llm.gateway import LLM
-from qualifai.prep.intake_gate import run_intake
 
 Enqueue = Callable[[UUID], Awaitable[None]]
 REUSABLE = (InterviewStatus.SUBMITTED, InterviewStatus.PREPARING, InterviewStatus.READY)
@@ -29,8 +27,6 @@ REUSABLE = (InterviewStatus.SUBMITTED, InterviewStatus.PREPARING, InterviewStatu
 class Submission(Frozen):
     interview_id: UUID
     status: InterviewStatus
-    role_family: RoleFamily
-    support: SupportLevel
     reused: bool = False
 
 
@@ -49,12 +45,13 @@ async def _get_or_create_user(session: AsyncSession, email: str) -> User:
 
 
 async def _reusable(
-    session: AsyncSession, user: User, digest: str, clock: Clock
+    session: AsyncSession, user_id: UUID | None, digest: str, clock: Clock
 ) -> Interview | None:
+    owner = Interview.user_id.is_(None) if user_id is None else Interview.user_id == user_id
     return await session.scalar(
         select(Interview)
         .where(
-            Interview.user_id == user.id,
+            owner,
             Interview.input_hash == digest,
             Interview.status.in_(REUSABLE),
             or_(Interview.expires_at.is_(None), Interview.expires_at > clock.now()),
@@ -66,34 +63,30 @@ async def _reusable(
 
 async def submit_interview(
     session: AsyncSession,
-    llm: LLM,
     enqueue: Enqueue,
     clock: Clock,
     req: InterviewRequest,
-    email: str,
+    email: str | None,
 ) -> Submission:
-    intake, support = await run_intake(llm, req)  # raises for unsupported roles / invalid docs
-
-    user = await _get_or_create_user(session, email)
+    user = await _get_or_create_user(session, email) if email else None  # no email → no user
+    user_id = user.id if user else None
     digest = input_hash(req)
-    existing = await _reusable(session, user, digest, clock)
+    existing = await _reusable(session, user_id, digest, clock)
     if existing is not None:
         return Submission(
             interview_id=existing.id,
             status=InterviewStatus(existing.status),
-            role_family=RoleFamily(existing.role_family),
-            support=SupportLevel(existing.support_level),
             reused=True,
         )
 
     interview = Interview(
         id=uuid7(),
-        user_id=user.id,
+        user_id=user_id,
         status=transition(InterviewStatus.SUBMITTED, InterviewStatus.PREPARING).value,
         round_type=req.round_type.value,
         company_tier=req.company_tier.value,
-        role_family=intake.role_family.value,
-        support_level=support.value,
+        role_family=RoleFamily.UNKNOWN.value,  # the intake gate fills these in
+        support_level=None,
         target_minutes=req.target_minutes,
         input_hash=digest,
         resume_text=req.resume_text,
@@ -103,9 +96,6 @@ async def submit_interview(
         company_name=req.company_name,
     )
     session.add(interview)
-    await session.flush()
-    if intake.injection_suspected:  # flagged, not obeyed (spec-001 FR-2)
-        session.add(InterviewEvent(interview_id=interview.id, type="injection_suspected"))
     await session.commit()
 
     try:
@@ -114,9 +104,4 @@ async def submit_interview(
         interview.status = transition(InterviewStatus.PREPARING, InterviewStatus.FAILED).value
         await session.commit()
         raise
-    return Submission(
-        interview_id=interview.id,
-        status=InterviewStatus.PREPARING,
-        role_family=intake.role_family,
-        support=support,
-    )
+    return Submission(interview_id=interview.id, status=InterviewStatus.PREPARING)

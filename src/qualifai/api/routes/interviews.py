@@ -1,7 +1,7 @@
 """Interview endpoints. Thin: validate → call application service → map result.
 
-POST /v1/interviews               resume text + JD text + tier + experience → 202 (prep enqueued)
-GET  /v1/interviews/{id}          status, prep progress, server time
+POST /v1/interviews               resume text + JD text + tier + experience → 202 + meet_id
+GET  /v1/interviews/{id}          status, failure reason, prep progress, server time (id = meet_id)
 GET  /v1/interviews/{id}/events   SSE: prep progress, streamed questions
 POST /v1/interviews/{id}/start    READY → IN_PROGRESS, returns first question
 POST /v1/interviews/{id}/answers  submit answer, returns next question
@@ -24,7 +24,7 @@ from qualifai.api.schemas import (
 from qualifai.db.models import Interview, InterviewKit
 from qualifai.db.session import get_session
 from qualifai.domain.clock import Clock
-from qualifai.domain.enums import InterviewStatus
+from qualifai.domain.enums import InterviewStatus, RoleFamily
 
 router = APIRouter(prefix="/interviews", tags=["interviews"])
 
@@ -34,12 +34,7 @@ async def create_interview(
     body: InterviewIn, submit: Submit = Depends(get_submit)
 ) -> InterviewAccepted:
     result = await submit(body.to_request(), body.email)
-    return InterviewAccepted(
-        interview_id=result.interview_id,
-        status=result.status,
-        detected_role=result.role_family.value,
-        support=result.support.value,
-    )
+    return InterviewAccepted(meet_id=result.interview_id, status=result.status)
 
 
 @router.get("/{interview_id}", response_model=InterviewStatusOut)
@@ -53,10 +48,14 @@ async def get_interview(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Interview not found")
     kit = await session.get(InterviewKit, interview_id)
     return InterviewStatusOut(
-        interview_id=interview.id,
+        meet_id=interview.id,
         status=InterviewStatus(interview.status),
-        detected_role=interview.role_family,
+        detected_role=None
+        if interview.role_family == RoleFamily.UNKNOWN
+        else interview.role_family,
         support=interview.support_level,
+        failure_code=interview.failure_code,
+        failure_reason=interview.failure_reason,
         progress=kit.prep_progress if kit else [],
         expires_at=interview.expires_at,
         started_at=interview.started_at,

@@ -10,9 +10,9 @@ from qualifai.domain.models import InterviewRequest
 
 
 class InterviewIn(InterviewRequest):
-    """POST /v1/interviews body: the interview request plus who it is for."""
+    """POST /v1/interviews body: the interview request, plus an optional email for the link."""
 
-    email: str = Field(max_length=320, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    email: str | None = Field(default=None, max_length=320, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     round_type: RoundType = RoundType.R1_TECHNICAL
 
     @field_validator("email", mode="before")
@@ -25,17 +25,17 @@ class InterviewIn(InterviewRequest):
 
 
 class InterviewAccepted(BaseModel):
-    interview_id: UUID
+    meet_id: UUID  # the interview id; what the candidate keeps to check back
     status: InterviewStatus
-    detected_role: str
-    support: str
 
 
 class InterviewStatusOut(BaseModel):
-    interview_id: UUID
+    meet_id: UUID
     status: InterviewStatus
-    detected_role: str
-    support: str
+    detected_role: str | None = None  # known once the intake gate has run
+    support: str | None = None
+    failure_code: str | None = None
+    failure_reason: str | None = None
     progress: list[str] = []
     expires_at: datetime | None = None
     started_at: datetime | None = None

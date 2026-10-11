@@ -14,7 +14,7 @@ const STEPS = [
     tone: "bg-brand-soft text-brand",
     title: "We prepare your kit",
     time: "A few minutes",
-    body: "QualifAI compares what you claim with what the job needs and plans what to verify and what to test. You get an email when it is ready.",
+    body: "QualifAI compares what you claim with what the job needs and plans what to verify and what to test. You get a Meet ID to check back with.",
   },
   {
     icon: ChatIcon,
@@ -95,8 +95,8 @@ export function Home() {
             What you need to begin
           </h2>
           <p className="mt-3 text-muted">
-            Four things and an email address so we can tell you when your
-            interview is ready. You have seven days to take it.
+            Four things, no account. Once your interview is ready you have
+            seven days to take it.
           </p>
           <Link
             to="/start"

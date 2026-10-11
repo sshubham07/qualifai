@@ -6,7 +6,7 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 
 ## User stories
 - **US-1** As a candidate, I submit my resume (text), a JD (text), round, company tier (service, startup, product, MAANG), experience range and duration
-  and immediately learn whether my role is supported.
+  and can see whether my interview is preparing, ready, or failed with the reason.
 - **US-2** As a candidate, I'm told when my interview is ready and can start it within 7 days.
 - **US-3** As a candidate, I'm asked questions about *my* claims and the JD's priorities, with
   follow-ups that react to what I say.
@@ -17,13 +17,13 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 ## Functional requirements
 | ID | Requirement |
 |---|---|
-| FR-1 | Intake gate classifies role family from JD (+resume); unsupported roles get 422 with a clear message before any prep; demand is logged |
-| FR-2 | Non-resume / non-JD uploads rejected; size limits enforced; injection markers flagged, not obeyed |
+| FR-1 | Intake gate (first step of the prep job, small local model) classifies the role family of the resume and of the JD; unless both are software roles the interview is FAILED with a reason before any extraction or question writing; an undecided model fails the same way; demand is logged |
+| FR-2 | Non-resume / non-JD text fails the gate with a reason; size limits enforced at submit; injection markers flagged, not obeyed |
 | FR-3 | Prep extracts a claims ledger and weighted JD skills, normalised via the taxonomy |
 | FR-4 | Gap matrix classifies each JD skill: verify claim / test gap / light |
 | FR-5 | Planner allocates phase budgets from the round template and a must/should/bonus topic pool |
 | FR-6 | Topic packs (opening questions, rubric, follow-up hooks) are generated per topic, grounded in seed banks |
-| FR-7 | Kit READY → email with link; `expires_at = ready_at + 7d`; daily sweep expires kits and deletes resume text |
+| FR-7 | Submission returns a `meet_id` to check status with (ADR-0017). Kit READY → email with link only if an email was given; `expires_at = ready_at + 7d`; daily sweep expires kits and deletes resume text |
 | FR-8 | Start requires owner auth, READY, not expired, not started; one attempt per kit |
 | FR-9 | Progressive readiness: "ready to start" once intro + first 2 topic packs exist |
 | FR-10 | Each answer is analysed into signals; the policy picks the next action; the LLM phrases it |
@@ -46,7 +46,8 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 | NFR-6 | Runs at ₹0 model cost on local / free hosted open-weight models |
 
 ## Acceptance criteria (examples)
-- **AC-1** Given an MBA JD, when submitted, then 422 `unsupported_role` and nothing is enqueued.
+- **AC-1** Given an MBA JD (or a non-software resume), when the prep job runs, then the interview is
+  FAILED with `jd_not_software` (or `resume_not_software`) and a reason, and no kit is prepared.
 - **AC-2** Given 6 min remaining and two unvisited must topics needing 3 min each plus 2 min
   closing, when a strong answer arrives, then the policy does **not** follow up.
 - **AC-3** Given the clock passes hard_end with no answer, then the interview completes with

@@ -1,5 +1,5 @@
 """Phase 1 intake: the four inputs (resume text, JD text, experience range, company type),
-their validation, and the gate running before anything is stored or enqueued."""
+their validation, and the gate's decision: both documents must be for a software role."""
 
 from functools import partial
 from pathlib import Path
@@ -9,19 +9,21 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from tenacity import wait_none
 from tests.conftest import T0
-from tests.prep_fakes import JD, RESUME, intake, prep_llm, request
+from tests.prep_fakes import JD, RESUME, intake, request
 
 from qualifai.api.deps import get_submit
 from qualifai.api.main import create_app
 from qualifai.api.schemas import InterviewIn
 from qualifai.domain.clock import FrozenClock
-from qualifai.domain.enums import CompanyTier, RoundType
+from qualifai.domain.enums import CompanyTier, FailureCode, RoundType, SupportLevel
 from qualifai.domain.errors import LLMOutputError
+from qualifai.domain.failures import FAILURE_REASONS
 from qualifai.domain.models import IntakeResult
 from qualifai.llm import gateway
 from qualifai.llm.gateway import LLMGateway
 from qualifai.llm.router import ModelRoute, ModelRouter
 from qualifai.llm.tasks import LLMTask
+from qualifai.prep.intake_gate import decide
 from qualifai.prep.submission import input_hash, submit_interview
 
 pytestmark = pytest.mark.unit
@@ -63,18 +65,57 @@ def test_interview_in_defaults_to_r1_and_normalises_email():
     assert body.to_request().round_type is RoundType.R1_TECHNICAL
 
 
+def test_interview_in_needs_no_email():
+    body = InterviewIn(
+        resume_text=RESUME,
+        jd_text=JD,
+        company_tier="startup",
+        experience_min_years=3,
+        experience_max_years=5,
+    )
+    assert body.email is None
+    assert body.to_request() == request(company_tier=CompanyTier.STARTUP)
+
+
+@pytest.mark.parametrize(
+    ("patch", "expected"),
+    [
+        ({}, SupportLevel.FULL),
+        ({"jd_role_family": "fullstack"}, SupportLevel.PARTIAL),
+        ({"resume_role_family": "frontend"}, SupportLevel.FULL),  # support follows the JD
+        ({"jd_role_family": "non_technical"}, FailureCode.JD_NOT_SOFTWARE),  # AC-1: an MBA JD
+        ({"resume_role_family": "non_technical"}, FailureCode.RESUME_NOT_SOFTWARE),
+        ({"is_resume": False}, FailureCode.NOT_A_RESUME),
+        ({"is_jd": False}, FailureCode.NOT_A_JD),
+        ({"confidence": 0.3}, FailureCode.UNDECIDED),
+        ({"jd_role_family": "unknown"}, FailureCode.UNDECIDED),
+        ({"resume_role_family": "unknown"}, FailureCode.UNDECIDED),
+        (
+            {"resume_role_family": "non_technical", "confidence": 0.1},
+            FailureCode.RESUME_NOT_SOFTWARE,
+        ),
+    ],
+)
+def test_ac1_gate_needs_a_software_resume_and_a_software_jd(patch, expected):
+    assert decide(IntakeResult(**intake(**patch))) is expected
+
+
+def test_every_failure_code_has_a_reason_to_show():
+    assert set(FAILURE_REASONS) == set(FailureCode) and all(FAILURE_REASONS.values())
+
+
 class UntouchableSession:
     def __getattr__(self, name: str) -> object:
-        raise AssertionError(f"session.{name} used before the intake gate passed")
+        raise AssertionError(f"session.{name} used for a request that failed validation")
 
 
-def client(llm, enqueued: list) -> TestClient:
+def client(enqueued: list) -> TestClient:
     async def enqueue(interview_id):
         enqueued.append(interview_id)
 
     app = create_app(NO_FRONTEND)
     app.dependency_overrides[get_submit] = lambda: partial(
-        submit_interview, UntouchableSession(), llm, enqueue, FrozenClock(T0)
+        submit_interview, UntouchableSession(), enqueue, FrozenClock(T0)
     )
     return TestClient(app)  # no `with`: lifespan (Redis pool) is not started
 
@@ -91,14 +132,6 @@ def body(**kw) -> dict:
     return {**base, **kw}
 
 
-def test_ac1_unsupported_role_gets_422_and_nothing_is_enqueued():
-    enqueued: list = []
-    resp = client(prep_llm(role="non_technical"), enqueued).post("/v1/interviews", json=body())
-    assert resp.status_code == 422
-    assert resp.json()["error"] == "unsupported_role"
-    assert enqueued == []
-
-
 @pytest.mark.parametrize(
     "patch",
     [
@@ -109,11 +142,11 @@ def test_ac1_unsupported_role_gets_422_and_nothing_is_enqueued():
         {"email": "not-an-email"},
     ],
 )
-def test_invalid_inputs_are_rejected_before_any_llm_call(patch):
-    llm, enqueued = prep_llm(), []
-    resp = client(llm, enqueued).post("/v1/interviews", json=body(**patch))
+def test_invalid_inputs_are_rejected_before_anything_is_stored_or_enqueued(patch):
+    enqueued: list = []
+    resp = client(enqueued).post("/v1/interviews", json=body(**patch))
     assert resp.status_code == 422
-    assert llm.calls == [] and enqueued == []
+    assert enqueued == []
 
 
 class _Msg:

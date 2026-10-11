@@ -25,22 +25,21 @@ def request(**kw: Any) -> InterviewRequest:
     return InterviewRequest(**{**base, **kw})
 
 
-def intake(role: str = "backend_sde") -> dict[str, Any]:
-    return {
-        "role_family": role,
-        "confidence": 0.9,
-        "resume_role_family": "backend_sde",
+def intake(**kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
         "is_resume": True,
         "is_jd": True,
+        "resume_role_family": "backend_sde",
+        "jd_role_family": "backend_sde",
+        "confidence": 0.9,
     }
+    return {**base, **kw}
 
 
-def prep_llm(
-    role: str = "backend_sde", jd_skills: tuple[str, ...] = ("PostgreSQL", "k8s")
-) -> FakeLLM:
+def prep_llm(jd_skills: tuple[str, ...] = ("PostgreSQL", "k8s"), **intake_kw: Any) -> FakeLLM:
     return FakeLLM(
         {
-            LLMTask.INTAKE_GATE: lambda _s, _u: intake(role),
+            LLMTask.INTAKE_GATE: lambda _s, _u: intake(**intake_kw),
             LLMTask.RESUME_EXTRACT: lambda _s, _u: {
                 "claims": [
                     {

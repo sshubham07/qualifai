@@ -5,6 +5,7 @@ import { ApiError, type StatusOut, getInterview, roleName } from "../lib/api";
 
 const POLL_MS = 3000;
 const PREP_STEPS = [
+  "Checking resume and job description",
   "Parsing resume",
   "Analysing job description",
   "Finding what to verify and what to test",
@@ -49,6 +50,9 @@ function Card({ children }: { children: ReactNode }) {
   );
 }
 
+// Failures of the resume / job description check: trying again needs different inputs.
+const REJECTED = ["not_a_resume", "not_a_jd", "resume_not_software", "jd_not_software"];
+
 function Message(props: { title: string; body: string; retry?: boolean }) {
   return (
     <Card>
@@ -63,6 +67,55 @@ function Message(props: { title: string; body: string; retry?: boolean }) {
         </Link>
       )}
     </Card>
+  );
+}
+
+function StartButton() {
+  const [clicked, setClicked] = useState(false);
+  return (
+    <div className="mt-6 flex flex-wrap items-center gap-4">
+      {/* TODO(spec-001 T-22): call POST /start and open the interview room. */}
+      <button
+        type="button"
+        onClick={() => setClicked(true)}
+        className="rounded-full bg-brand px-7 py-3 font-medium text-white shadow-sm transition hover:bg-brand-dark"
+      >
+        Start interview
+      </button>
+      {clicked && (
+        <p role="status" className="text-sm text-muted">
+          The interview room isn't built yet. Your questions are saved and waiting.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function MeetId({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (insecure origin or denied): the id is on screen to select.
+    }
+  }
+
+  return (
+    <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-canvas/50 px-4 py-3 text-sm">
+      <span className="text-muted">Meet ID</span>
+      <code className="font-mono break-all">{id}</code>
+      <button
+        type="button"
+        onClick={copy}
+        className="ml-auto rounded-full border border-line px-3 py-1 font-medium transition hover:border-brand/50"
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 }
 
@@ -121,8 +174,12 @@ function PrepStatus({ id }: { id: string }) {
   if (data.status === "failed") {
     return (
       <Message
-        title="We couldn't prepare this interview"
-        body="Something went wrong while building your kit. This sometimes happens when the job description lists no skills we recognise yet. Please try again."
+        title={
+          REJECTED.includes(data.failure_code ?? "")
+            ? "We can't run this interview"
+            : "We couldn't prepare this interview"
+        }
+        body={data.failure_reason ?? "Something went wrong while building your kit. Please try again."}
         retry
       />
     );
@@ -149,9 +206,11 @@ function PrepStatus({ id }: { id: string }) {
         </h1>
         <p className="mt-2 text-muted">
           {preparing
-            ? "This takes a few minutes. You can close this page; we will email you the link when it is ready."
-            : "We have emailed you a link to it. Keep that email: the link is how you get back in."}
+            ? "This takes a few minutes. You can close this page. Keep your Meet ID or this page's link to check back."
+            : "Your questions are prepared. Keep this page's link to come back to it."}
         </p>
+
+        <MeetId id={data.meet_id} />
 
         {!preparing && data.expires_at && (
           <p className="mt-5 rounded-xl bg-go-soft px-4 py-3 text-sm">
@@ -167,6 +226,8 @@ function PrepStatus({ id }: { id: string }) {
           </p>
         )}
 
+        {!preparing && <StartButton />}
+
         <ul className="mt-6 space-y-3">
           {(preparing ? PREP_STEPS : data.progress).map((step) => (
             <li key={step} className="flex items-center gap-3 text-[15px]">
@@ -181,12 +242,14 @@ function PrepStatus({ id }: { id: string }) {
         </ul>
       </Card>
 
-      <p className="px-1 text-sm text-muted">
-        Role detected:{" "}
-        <span className="font-medium text-ink">{roleName(data.detected_role)}</span>
-        {data.support === "partial" &&
-          " — limited mode. We support this role partly, so the interview stays on general technical ground."}
-      </p>
+      {data.detected_role && (
+        <p className="px-1 text-sm text-muted">
+          Role detected:{" "}
+          <span className="font-medium text-ink">{roleName(data.detected_role)}</span>
+          {data.support === "partial" &&
+            " — limited mode. We support this role partly, so the interview stays on general technical ground."}
+        </p>
+      )}
     </div>
   );
 }

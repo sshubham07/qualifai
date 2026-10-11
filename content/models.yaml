@@ -8,14 +8,14 @@ providers:
 
 tasks:
   # Phase 1 — Prep (large; slow is fine)
-  intake_gate:         { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.0, max_tokens: 300 }
+  intake_gate:         { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.0, max_tokens: 300, timeout_s: 120, reasoning_effort: none }  # first call loads the model
   resume_extract:      { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 2500 }
   jd_extract:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 1500 }
   topic_selection:     { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.2, max_tokens: 1500 }
   topic_pack:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.3, max_tokens: 900 }
   # Phase 2 — Live (fast)
   turn_analyzer:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.0, max_tokens: 400, timeout_s: 15 }
-  question_gen:        { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.6, max_tokens: 150, timeout_s: 15 }
+  question_gen:        { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.6, max_tokens: 150, timeout_s: 15, reasoning_effort: none }
   coding_helper:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.2, max_tokens: 400 }
   # Phase 3 — Evaluation (quality matters most)
   topic_eval:          { provider: groq,   model: "qwen/qwen3.8-27b",    temperature: 0.0, max_tokens: 1200 }

@@ -17,6 +17,7 @@ class ModelRoute:
     temperature: float = 0.2
     max_tokens: int = 1024
     timeout_s: float = 60.0
+    reasoning_effort: str | None = None  # "none" stops a thinking model spending the budget
 
 
 class ModelRouter:

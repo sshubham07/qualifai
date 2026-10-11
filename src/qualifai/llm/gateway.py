@@ -24,12 +24,16 @@ from tenacity import (
 )
 
 from qualifai.domain.errors import LLMOutputError
-from qualifai.llm.router import ModelRouter
+from qualifai.llm.router import ModelRoute, ModelRouter
 from qualifai.llm.tasks import LLMTask
 
 log = structlog.get_logger(__name__)
 T = TypeVar("T", bound=BaseModel)
 _RETRY_WAIT = wait_exponential(min=0.5, max=4)
+
+
+def _extra(route: ModelRoute) -> dict[str, str] | None:
+    return {"reasoning_effort": route.reasoning_effort} if route.reasoning_effort else None
 
 
 class LLM(Protocol):
@@ -67,6 +71,7 @@ class LLMGateway:
             temperature=route.temperature,
             max_tokens=route.max_tokens,
             timeout=route.timeout_s,
+            extra_body=_extra(route),
             response_format={
                 "type": "json_schema",
                 "json_schema": {"name": schema.__name__, "schema": schema.model_json_schema()},
@@ -95,6 +100,7 @@ class LLMGateway:
             model=route.model,
             temperature=route.temperature,
             max_tokens=route.max_tokens,
+            extra_body=_extra(route),
             stream=True,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         )

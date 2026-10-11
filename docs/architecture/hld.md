@@ -20,7 +20,7 @@ flowchart LR
 | Component | Responsibility | Tech |
 |---|---|---|
 | Web | Thin single-page app: setup, prep status, interview, report; no AI in the browser | React + Vite, static build served by the API |
-| API | Validation, auth, intake gate (sync), start/answer endpoints, SSE, serves the built web app | FastAPI |
+| API | Validation, auth, start/answer endpoints, SSE, serves the built web app | FastAPI |
 | Worker | Prep pipeline, evaluation pipeline, hard-stop jobs, daily expiry | arq on Redis |
 | Interview engine | LangGraph loop + Policy + Context Compiler + TimeWindow | LangGraph, pure Python |
 | LLM Gateway | Task routing, structured output + validation + retries, streaming, telemetry | openai SDK (OpenAI-compatible) |
@@ -34,10 +34,10 @@ flowchart LR
 ```mermaid
 stateDiagram-v2
   [*] --> SUBMITTED
-  SUBMITTED --> PREPARING: intake gate passed
-  SUBMITTED --> [*]: unsupported role (422, demand logged)
-  PREPARING --> READY: kit built (email)
-  PREPARING --> FAILED
+  SUBMITTED --> PREPARING: stored + prep enqueued
+  PREPARING --> FAILED: intake gate rejects (reason stored)
+  PREPARING --> READY: kit built (email if given)
+  PREPARING --> FAILED: prep error (reason stored)
   READY --> IN_PROGRESS: start (token/session)
   READY --> EXPIRED: 7 days untaken (kit + resume deleted)
   IN_PROGRESS --> COMPLETED: natural end / hard stop

@@ -44,7 +44,7 @@ Everything the [README](../README.md) leaves out: design, models, judgement, sto
 
 | Phase | What happens | Mode |
 |---|---|---|
-| **① Prep** | Intake gate (role check) → resume/JD extraction → gap matrix → time-budgeted plan → topic packs (questions, rubrics, follow-up hooks) → **READY** email | async worker, large model, minutes |
+| **① Prep** | Intake gate (role check) → resume/JD extraction → gap matrix → time-budgeted plan → topic packs (questions, rubrics, follow-up hooks) → **READY** (email only if one was given; the candidate checks back with the meet id) | async worker, large model, minutes |
 | **② Live interview** | Question → answer → Turn Analyzer → **Policy** (time + signals) → next question; ends naturally around the target time | LangGraph loop, fast models, seconds |
 | **③ Evaluation** | Per-topic scores with quotes → evidence check → aggregation → gates → verdict → narrative → HTML report | async worker, large model, minutes |
 
@@ -114,9 +114,9 @@ Full design: [`docs/architecture/hld.md`](architecture/hld.md) · decisions: [`A
 stateDiagram-v2
   direction LR
   [*] --> SUBMITTED
-  SUBMITTED --> PREPARING: intake ok
-  SUBMITTED --> [*]: unsupported role (422)
-  PREPARING --> READY: kit built · email
+  SUBMITTED --> PREPARING: stored · prep enqueued
+  PREPARING --> FAILED: not a software resume + JD · reason shown
+  PREPARING --> READY: kit built · email if given
   READY --> IN_PROGRESS: start
   READY --> EXPIRED: 7 days
   IN_PROGRESS --> COMPLETED: natural end / hard stop
@@ -189,7 +189,7 @@ lives in [`content/models.yaml`](../content/models.yaml), so models change throu
 
 | Phase | Task | Size tier | Default model* | Why this tier |
 |---|---|---|---|---|
-| Prep | Intake gate (role, is-resume, is-JD) | Small | Gemma 4 (small, local) | Classification, cheap, synchronous |
+| Prep | Intake gate (is-resume, is-JD, role family of each) | Small | Gemma 4 (small, local via Ollama) | Classification, cheap, first step of the prep job |
 | Prep | Resume → claims ledger | Large | gpt-oss-120b (hosted free tier) | Extraction quality drives everything downstream |
 | Prep | JD → weighted skills | Large | gpt-oss-120b | Same |
 | Prep | Topic packs (questions, rubric, hooks) | Large | gpt-oss-120b | **Biggest quality lever**: good rubrics make small live models judge well |
@@ -274,9 +274,9 @@ Deciding gap reported to the candidate: *PostgreSQL indexing and isolation level
 ```mermaid
 flowchart TB
   subgraph W1["Prep · worker"]
-    a1[POST /interviews] --> a2{Intake gate}
-    a2 -- unsupported --> a3[422 + demand log]
-    a2 -- ok --> a4[enqueue prepare] --> a5[extract resume + JD] --> a6[gap matrix] --> a7[plan] --> a8[topic packs ∥] --> a9[READY + email]
+    a1[POST /interviews] --> a4[enqueue prepare] --> a2{Intake gate}
+    a2 -- not software / undecided --> a3[FAILED + reason]
+    a2 -- ok --> a5[extract resume + JD] --> a6[gap matrix] --> a7[plan] --> a8[topic packs ∥] --> a9[READY + email if given]
   end
   subgraph W2["Live · API + LangGraph"]
     b1[POST /start] --> b2[TimeWindow + schedule hard stop] --> b3[[turn loop]] --> b4[COMPLETED]
@@ -293,7 +293,7 @@ flowchart TB
 
 | Workflow | Sync / async | Engine |
 |---|---|---|
-| Intake gate | **sync** (fails fast before any cost) | API |
+| Intake gate | async, first step of prep (fails before any large-model cost) | arq job |
 | Prep | async | arq job, plain async code |
 | Live interview | sync per turn, streamed | LangGraph + Postgres checkpointer |
 | Hard stop | delayed job at `hard_end + 60 s` | arq |
@@ -426,7 +426,8 @@ migrations, and runs the API, worker and web app together (Ctrl+C stops them).
 `make web-build` compiles the web app into `frontend/dist`; the API then serves it itself at
 http://localhost:8000 (set `QUALIFAI_BASE_URL` to that address so emailed links point there).
 
-Emails land in Mailpit at http://localhost:8025.
+The web form asks for no email (ADR-0017). A submission sent to the API with an `email` still
+gets the ready mail, which lands in Mailpit at http://localhost:8025.
 
 ---
 

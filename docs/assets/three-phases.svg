@@ -35,6 +35,6 @@
   <text x="140" y="185" class="c" text-anchor="middle">async worker · large model · minutes</text>
   <text x="450" y="185" class="c" text-anchor="middle">LangGraph loop · fast models · seconds</text>
   <text x="760" y="185" class="c" text-anchor="middle">async worker · large model · minutes</text>
-  <text x="295" y="215" class="c" text-anchor="middle">kit → READY (email)</text>
+  <text x="295" y="215" class="c" text-anchor="middle">kit → READY · meet id</text>
   <text x="605" y="215" class="c" text-anchor="middle">transcript → report</text>
 </svg>

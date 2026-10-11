@@ -7,13 +7,12 @@ from uuid import UUID
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from qualifai.container import get_llm
 from qualifai.db.session import get_session
 from qualifai.domain.clock import Clock, SystemClock
 from qualifai.domain.models import InterviewRequest
 from qualifai.prep.submission import Submission, submit_interview
 
-Submit = Callable[[InterviewRequest, str], Awaitable[Submission]]
+Submit = Callable[[InterviewRequest, str | None], Awaitable[Submission]]
 
 
 def get_clock() -> Clock:
@@ -26,4 +25,4 @@ async def get_submit(request: Request, session: AsyncSession = Depends(get_sessi
             "prepare_interview_job", str(interview_id), _job_id=f"prepare:{interview_id}"
         )
 
-    return partial(submit_interview, session, get_llm(), enqueue, SystemClock())
+    return partial(submit_interview, session, enqueue, SystemClock())

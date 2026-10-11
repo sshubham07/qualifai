@@ -16,6 +16,8 @@ Format: MADR-lite. New ADRs via the `write-adr` skill. Never edit an accepted de
 | [0010](0010-no-mcp.md) | No MCP | Accepted |
 | [0011](0011-retrieval-as-supporting-component.md) | Retrieval only as a supporting component (V2), via pgvector | Accepted |
 | [0012](0012-flexible-time-window.md) | Flexible time window instead of a hard deadline | Accepted |
-| [0013](0013-role-family-gate.md) | Role-family intake gate; Backend SDE only in MVP | Accepted |
+| [0013](0013-role-family-gate.md) | Role-family intake gate; Backend SDE only in MVP | Accepted, partly superseded by 0016 |
 | [0014](0014-text-intake-and-company-types.md) | Text-only intake; company types are service, startup, product, MAANG | Accepted |
 | [0015](0015-react-vite-spa-served-by-api.md) | Frontend is a React + Vite single-page app served by the API | Accepted |
+| [0016](0016-intake-gate-in-prep-job.md) | The intake gate runs in the prep job; both documents must be for a software role | Accepted |
+| [0017](0017-meet-id-email-deferred.md) | The candidate keeps a meet id; email is optional and deferred | Accepted |
