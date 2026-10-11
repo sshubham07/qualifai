@@ -1,6 +1,9 @@
 # LLM routing: task → provider/model. Change models here, never in code (ADR-0004).
 # All providers are OpenAI-compatible. Free-tier quotas are per model, so phases are spread
 # across different models. Check current model availability — the open-weight landscape moves fast.
+# gpt-oss models think before answering and the thinking counts against max_tokens, so the prep
+# routes ask for low effort and leave headroom; a hosted tier also reserves prompt + max_tokens
+# against its tokens-per-minute limit, so headroom is kept modest.
 providers:
   ollama: { base_url_env: QUALIFAI_OLLAMA_BASE_URL }
   groq:   { base_url_env: QUALIFAI_GROQ_BASE_URL, api_key_env: QUALIFAI_GROQ_API_KEY }
@@ -9,10 +12,11 @@ providers:
 tasks:
   # Phase 1 — Prep (large; slow is fine)
   intake_gate:         { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.0, max_tokens: 300, timeout_s: 120, reasoning_effort: none }  # first call loads the model
-  resume_extract:      { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 2500 }
-  jd_extract:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 1500 }
+  resume_extract:      { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 2500, reasoning_effort: low }
+  jd_extract:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 1500, reasoning_effort: low }
   topic_selection:     { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.2, max_tokens: 1500 }
-  topic_pack:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.3, max_tokens: 900 }
+  topic_pack:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.3, max_tokens: 1400, reasoning_effort: low }
+  opening_question:    { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.4, max_tokens: 500, reasoning_effort: low }
   # Phase 2 — Live (fast)
   turn_analyzer:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.0, max_tokens: 400, timeout_s: 15 }
   question_gen:        { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.6, max_tokens: 150, timeout_s: 15, reasoning_effort: none }

@@ -11,6 +11,12 @@ from qualifai.llm.tasks import LLMTask
 FIXTURES = Path(__file__).parent / "fixtures"
 RESUME = (FIXTURES / "sample_resume.txt").read_text()
 JD = (FIXTURES / "sample_jd.txt").read_text()
+# Names nothing the sample JD asks for: the match check reads the resume text as well as the claims.
+FRONTEND_RESUME = (
+    "Frontend Engineer, 4 years. Built a design system in React and TypeScript used by twelve "
+    "product teams; led the migration from Redux to React Query; raised the Lighthouse score from "
+    "62 to 94 with code splitting; wrote Storybook docs and Jest tests; built accessible forms."
+)
 
 
 def request(**kw: Any) -> InterviewRequest:
@@ -36,7 +42,14 @@ def intake(**kw: Any) -> dict[str, Any]:
     return {**base, **kw}
 
 
-def prep_llm(jd_skills: tuple[str, ...] = ("PostgreSQL", "k8s"), **intake_kw: Any) -> FakeLLM:
+OPENING = "Walk me through the Kubernetes platform you designed and your part in it."
+
+
+def prep_llm(
+    jd_skills: tuple[str, ...] = ("PostgreSQL", "k8s"),
+    resume_skills: tuple[str, ...] = ("Kubernetes",),
+    **intake_kw: Any,
+) -> FakeLLM:
     return FakeLLM(
         {
             LLMTask.INTAKE_GATE: lambda _s, _u: intake(**intake_kw),
@@ -45,7 +58,7 @@ def prep_llm(jd_skills: tuple[str, ...] = ("PostgreSQL", "k8s"), **intake_kw: An
                     {
                         "id": "c1",
                         "text": "Designed microservices using Kubernetes",
-                        "skills": ["Kubernetes"],
+                        "skills": list(resume_skills),
                         "ownership_verb": "designed",
                         "evidence_level": "deep_ownership",
                     }
@@ -59,5 +72,6 @@ def prep_llm(jd_skills: tuple[str, ...] = ("PostgreSQL", "k8s"), **intake_kw: An
                 "opening_questions": ["Walk me through it."],
                 "rubric": {"expected_points": ["trade-offs"]},
             },
+            LLMTask.OPENING_QUESTION: lambda _s, _u: {"question": OPENING},
         }
     )

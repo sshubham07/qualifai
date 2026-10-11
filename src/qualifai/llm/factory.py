@@ -12,6 +12,10 @@ from qualifai.config.settings import Settings
 from qualifai.llm.gateway import LLMGateway
 from qualifai.llm.router import ModelRouter
 
+# Free hosted tiers limit tokens per minute; the SDK waits the time the provider asks for and
+# tries again. Prep is a background job, so waiting a minute is fine.
+RATE_LIMIT_RETRIES = 8
+
 
 def _setting(settings: Settings, env_name: str | None) -> str | None:
     """models.yaml names env vars (QUALIFAI_GROQ_API_KEY); Settings holds them as attributes."""
@@ -30,5 +34,7 @@ def build_gateway(settings: Settings) -> LLMGateway:
         if base_url is None:
             continue  # provider not configured in this environment (e.g. vLLM locally)
         api_key = _setting(settings, spec.get("api_key_env"))
-        clients[name] = AsyncOpenAI(base_url=base_url, api_key=api_key or "not-needed")
+        clients[name] = AsyncOpenAI(
+            base_url=base_url, api_key=api_key or "not-needed", max_retries=RATE_LIMIT_RETRIES
+        )
     return LLMGateway(ModelRouter.from_yaml(path), clients)

@@ -8,6 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from qualifai.domain.models import IntakeResult, TopicEvaluation, TurnSignals
+from qualifai.prep.opening import OpeningQuestion
 
 pytestmark = pytest.mark.contract
 FX = Path(__file__).parent / "fixtures"
@@ -63,3 +64,22 @@ def test_intake_fixture_validates():
 def test_intake_rejects_bad_output(patch):
     with pytest.raises(ValidationError):
         IntakeResult.model_validate({**load("intake_ok.json"), **patch})
+
+
+def test_opening_question_fixture_validates():
+    assert OpeningQuestion.model_validate(load("opening_question_ok.json")).question.endswith(".")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"question": ""},
+        {"question": "Hi?"},  # too short to be a real question
+        {"question": "x" * 601},
+        {"questions": ["one", "two"]},  # exactly one question
+        {**json.loads((FX / "opening_question_ok.json").read_text()), "difficulty": 4},
+    ],
+)
+def test_opening_question_rejects_bad_output(bad):
+    with pytest.raises(ValidationError):
+        OpeningQuestion.model_validate(bad)

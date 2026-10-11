@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from tests.conftest import T0
-from tests.prep_fakes import RESUME, prep_llm, request
+from tests.prep_fakes import FRONTEND_RESUME, OPENING, RESUME, prep_llm, request
 
 from qualifai.api.deps import get_clock
 from qualifai.api.main import create_app
@@ -140,6 +140,13 @@ async def test_prepare_job_stores_kit_marks_ready_and_emails_link(sessions):
     assert {t.skills[0] for t in plan.topics} == {"postgresql", "kubernetes"}
     assert all(t.opening_questions and t.rubric for t in plan.topics)
     assert {g["skill"] for g in kit.profile["gaps"]} == {"postgresql", "kubernetes"}
+    assert kit.profile["opening_question"] == OPENING
+    assert kit.profile["match"] == {  # kubernetes from the claim, postgresql from the resume text
+        "score": 1.0,
+        "matched": ["kubernetes", "postgresql"],
+        "missing": [],
+    }
+    assert kit.profile["resume_years"] == 3.5
     assert kit.prep_progress[:2] == ["Checking resume and job description", "Parsing resume"]
     assert len(kit.prep_progress) == 6
 
@@ -227,6 +234,45 @@ async def test_ac1_gate_rejection_fails_with_a_reason_and_prepares_nothing(
     assert h.sent == []
 
 
+async def test_ac6_resume_showing_nothing_the_jd_asks_for_fails_before_questions_are_written(
+    sessions,
+):
+    jd_skills, resume_skills = ("PostgreSQL", "k8s"), ("React", "CSS")
+    h = Harness(sessions, prep_llm(jd_skills=jd_skills, resume_skills=resume_skills))
+    sub = await h.submit(resume_text=f"{FRONTEND_RESUME} {uuid4().hex}")
+    await h.prepare(sub.interview_id)
+
+    row = await h.interview(sub.interview_id)
+    assert (row.status, row.failure_code) == ("failed", FailureCode.RESUME_JD_NO_MATCH)
+    assert "(postgresql, kubernetes)" in row.failure_reason and row.ready_at is None
+    tasks = [task for task, _ in h.llm.calls]  # extraction ran; no question was written
+    assert LLMTask.TOPIC_PACK not in tasks and LLMTask.OPENING_QUESTION not in tasks
+    async with sessions() as s:
+        assert await s.get(InterviewKit, sub.interview_id) is None
+    assert h.sent == []
+
+    await h.prepare(sub.interview_id)  # FAILED is a dead end: a redelivered job changes nothing
+    assert [task for task, _ in h.llm.calls] == tasks
+    assert (await h.interview(sub.interview_id)).status == "failed"
+
+
+async def test_a_partial_fit_goes_ahead_to_a_ready_interview(sessions):
+    # One nice-to-have out of five JD skills: far from a full match, but not totally off.
+    llm = prep_llm(
+        jd_skills=("PostgreSQL", "k8s", "Kafka", "Docker", "Python"), resume_skills=("Docker",)
+    )
+    h = Harness(sessions, llm)
+    sub = await h.submit(resume_text=f"{FRONTEND_RESUME} {uuid4().hex}")
+    await h.prepare(sub.interview_id)
+
+    row = await h.interview(sub.interview_id)
+    assert (row.status, row.failure_code) == ("ready", None)
+    async with sessions() as s:
+        kit = await s.get_one(InterviewKit, sub.interview_id)
+    assert kit.profile["match"]["matched"] == ["docker"] and kit.profile["match"]["score"] == 0.2
+    assert kit.profile["opening_question"] == OPENING
+
+
 async def test_a_failed_interview_is_not_reused_on_resubmission(sessions):
     h = Harness(sessions, prep_llm(jd_role_family="non_technical"))
     first = await h.submit()
@@ -249,6 +295,19 @@ async def test_status_endpoint_follows_prep_and_returns_server_time(sessions):
 
     async with AsyncClient(transport=ASGITransport(app), base_url="http://t") as http:
         before = (await http.get(f"/v1/interviews/{sub.interview_id}")).json()
+        during: list[list[str]] = []
+
+        class Watching:  # asks the status endpoint what it shows while a model call is running
+            def __init__(self, llm) -> None:
+                self.llm = llm
+
+            async def structured(self, task, system, user, schema):
+                if task in (LLMTask.INTAKE_GATE, LLMTask.RESUME_EXTRACT):
+                    seen = (await http.get(f"/v1/interviews/{sub.interview_id}")).json()
+                    during.append(seen["progress"])
+                return await self.llm.structured(task, system, user, schema)
+
+        h.llm = Watching(h.llm)
         await h.prepare(sub.interview_id)
         after = (await http.get(f"/v1/interviews/{sub.interview_id}")).json()
         h.llm = prep_llm(resume_role_family="non_technical")
@@ -256,9 +315,16 @@ async def test_status_endpoint_follows_prep_and_returns_server_time(sessions):
         failed = (await http.get(f"/v1/interviews/{rejected.interview_id}")).json()
         missing = await http.get(f"/v1/interviews/{uuid4()}")
 
+    assert during == [  # each step is visible as soon as it starts
+        ["Checking resume and job description"],
+        ["Checking resume and job description", "Parsing resume"],
+    ]
+    assert failed["progress"] == during[1][:1]  # shows where a failed prep stopped
     assert before["meet_id"] == str(sub.interview_id) and "interview_id" not in before
     assert (before["status"], before["progress"], before["expires_at"]) == ("preparing", [], None)
     assert (before["detected_role"], before["support"]) == (None, None)
+    assert (before["opening_question"], after["opening_question"]) == (None, OPENING)
+    assert failed["opening_question"] is None
     assert after["status"] == "ready" and len(after["progress"]) == 6
     assert (after["detected_role"], after["support"]) == ("backend_sde", "full")
     assert (failed["status"], failed["failure_code"]) == ("failed", "resume_not_software")

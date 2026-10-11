@@ -1,6 +1,7 @@
 """Topic packs — the large model writes opening questions, rubric and follow-up hooks for each
 planned topic, grounded in the skill seed bank (and, from V2, retrieved real questions).
-Packs are independent, so they are generated in parallel."""
+Packs are independent, so they are generated in parallel, a few at a time: hosted free tiers cap
+tokens per minute, and ten simultaneous calls only produce rate-limit errors."""
 
 from __future__ import annotations
 
@@ -14,6 +15,8 @@ from qualifai.domain.models import PlannedTopic, Rubric
 from qualifai.llm.gateway import LLM
 from qualifai.llm.prompts import load_prompt
 from qualifai.llm.tasks import LLMTask
+
+PACK_CONCURRENCY = 2
 
 
 class TopicPack(BaseModel):
@@ -54,12 +57,12 @@ async def build_all_packs(
     tier: TierPreset,
     claims: Mapping[str, str],
 ) -> list[PlannedTopic]:
-    """Parallel generation. Progressive readiness (spec-001 FR-9) can await the first N first."""
-    return list(
-        await asyncio.gather(
-            *(
-                build_pack(llm, t, template, tier, claim=claims.get(t.claim_id or "", ""))
-                for t in topics
-            )
-        )
-    )
+    """Bounded parallel generation. Progressive readiness (spec-001 FR-9) can await the first N."""
+    slots = asyncio.Semaphore(PACK_CONCURRENCY)
+
+    async def one(topic: PlannedTopic) -> PlannedTopic:
+        async with slots:
+            claim = claims.get(topic.claim_id or "", "")
+            return await build_pack(llm, topic, template, tier, claim=claim)
+
+    return list(await asyncio.gather(*(one(t) for t in topics)))

@@ -10,7 +10,7 @@ ALLOWED: dict[S, frozenset[S]] = {
     S.IN_PROGRESS: frozenset({S.COMPLETED}),
     S.COMPLETED: frozenset({S.EVALUATING}),
     S.EVALUATING: frozenset({S.REPORT_READY, S.FAILED}),
-    S.FAILED: frozenset({S.PREPARING, S.EVALUATING}),  # retry
+    S.FAILED: frozenset(),  # dead end: the reason is stored; trying again is a new interview
     S.REPORT_READY: frozenset(),
     S.EXPIRED: frozenset(),
 }

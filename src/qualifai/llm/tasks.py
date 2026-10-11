@@ -10,6 +10,7 @@ class LLMTask(StrEnum):
     JD_EXTRACT = "jd_extract"
     TOPIC_SELECTION = "topic_selection"
     TOPIC_PACK = "topic_pack"
+    OPENING_QUESTION = "opening_question"
     # Phase 2 — Live (speed matters)
     TURN_ANALYZER = "turn_analyzer"
     QUESTION_GEN = "question_gen"

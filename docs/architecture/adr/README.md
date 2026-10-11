@@ -21,3 +21,4 @@ Format: MADR-lite. New ADRs via the `write-adr` skill. Never edit an accepted de
 | [0015](0015-react-vite-spa-served-by-api.md) | Frontend is a React + Vite single-page app served by the API | Accepted |
 | [0016](0016-intake-gate-in-prep-job.md) | The intake gate runs in the prep job; both documents must be for a software role | Accepted |
 | [0017](0017-meet-id-email-deferred.md) | The candidate keeps a meet id; email is optional and deferred | Accepted |
+| [0018](0018-resume-jd-match-gate-failed-terminal.md) | A resume–JD match check stops prep; FAILED is terminal | Accepted |

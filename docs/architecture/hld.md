@@ -36,7 +36,8 @@ stateDiagram-v2
   [*] --> SUBMITTED
   SUBMITTED --> PREPARING: stored + prep enqueued
   PREPARING --> FAILED: intake gate rejects (reason stored)
-  PREPARING --> READY: kit built (email if given)
+  PREPARING --> FAILED: resume and JD totally off (reason names the skills)
+  PREPARING --> READY: kit + opening question built (email if given)
   PREPARING --> FAILED: prep error (reason stored)
   READY --> IN_PROGRESS: start (token/session)
   READY --> EXPIRED: 7 days untaken (kit + resume deleted)
@@ -44,7 +45,7 @@ stateDiagram-v2
   COMPLETED --> EVALUATING
   EVALUATING --> REPORT_READY: report (email)
   EVALUATING --> FAILED
-  FAILED --> PREPARING: retry
+  FAILED --> [*]: dead end (ADR-0018)
 ```
 
 ## 4. Live turn (sequence)
@@ -102,7 +103,7 @@ Transcript ≈ 50–150 KB per interview → Postgres is trivially sufficient.
 | LLM timeout / invalid JSON | Gateway retries ×3 with backoff; live loop falls back to a pre-generated opening question; END uses a fixed template |
 | Provider rate-limited | Router can switch provider per task via config; prep/eval jobs retry later |
 | Redis lost | Rebuild from Postgres checkpoint; lose ≤ a few seconds of draft text |
-| Worker crash mid-prep | Job retried; prep steps idempotent on (interview_id, step) |
+| Worker crash mid-prep | Job retried while the interview is still PREPARING; once FAILED it is never retried (ADR-0018) |
 | Candidate disconnects | Clock continues server-side; rejoin via session; hard-stop job ends it |
 | Evidence quotes not found | Dimension dropped; topic may become low-confidence; never invented |
 

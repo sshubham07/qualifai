@@ -47,6 +47,7 @@ Company name (optional, flavour only).
 | Topic | One thread: an opening question plus its follow-ups |
 | Topic pack | Opening questions + rubric (expected points, red flags) + follow-up hooks for one topic |
 | Gap matrix | JD skill × resume evidence → verify claim / test gap / light |
+| Match check | Which JD skills the resume shows; none at all → FAILED with the skills named (ADR-0018) |
 | Claims ledger | Resume statements extracted with ownership level, verified during the interview |
 | Policy engine | Pure Python deciding the next action from signals + time |
 | Turn signals | Turn Analyzer output: rubric points covered, specificity, consistency, hooks |

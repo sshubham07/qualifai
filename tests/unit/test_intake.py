@@ -4,8 +4,10 @@ their validation, and the gate's decision: both documents must be for a software
 from functools import partial
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
+from openai import BadRequestError
 from pydantic import ValidationError
 from tenacity import wait_none
 from tests.conftest import T0
@@ -157,12 +159,14 @@ class _Msg:
 class _FlakyClient:
     """Returns invalid JSON `bad` times, then a valid IntakeResult."""
 
-    def __init__(self, bad: int) -> None:
-        self.calls, self._bad = 0, bad
+    def __init__(self, bad: int, error: Exception | None = None) -> None:
+        self.calls, self._bad, self._error = 0, bad, error
         self.chat = type("Chat", (), {"completions": self})()
 
     async def create(self, **_: object) -> object:
         self.calls += 1
+        if self.calls <= self._bad and self._error is not None:
+            raise self._error
         content = "{}" if self.calls <= self._bad else IntakeResult(**intake()).model_dump_json()
         return type("Resp", (), {"choices": [_Msg(content)], "usage": None})()
 
@@ -185,6 +189,27 @@ async def test_gateway_gives_up_after_three_attempts(monkeypatch):
     with pytest.raises((ValidationError, LLMOutputError)):
         await _gateway(fake).structured(LLMTask.INTAKE_GATE, "s", "u", IntakeResult)
     assert fake.calls == 3
+
+
+def _bad_request(code: str) -> BadRequestError:
+    response = httpx.Response(400, request=httpx.Request("POST", "http://provider"))
+    return BadRequestError("rejected", response=response, body={"code": code})
+
+
+async def test_gateway_retries_json_the_provider_rejected(monkeypatch):
+    # e.g. a reasoning model that spent max_tokens before finishing the document
+    monkeypatch.setattr(gateway, "_RETRY_WAIT", wait_none())
+    fake = _FlakyClient(bad=1, error=_bad_request("json_validate_failed"))
+    out = await _gateway(fake).structured(LLMTask.INTAKE_GATE, "s", "u", IntakeResult)
+    assert out.is_resume and fake.calls == 2
+
+
+async def test_gateway_does_not_retry_other_bad_requests(monkeypatch):
+    monkeypatch.setattr(gateway, "_RETRY_WAIT", wait_none())
+    fake = _FlakyClient(bad=5, error=_bad_request("model_not_found"))
+    with pytest.raises(BadRequestError):
+        await _gateway(fake).structured(LLMTask.INTAKE_GATE, "s", "u", IntakeResult)
+    assert fake.calls == 1
 
 
 def test_api_serves_the_built_web_app_without_shadowing_api_routes(tmp_path):

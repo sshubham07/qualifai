@@ -58,6 +58,7 @@ class FailureCode(StrEnum):
     JD_NOT_SOFTWARE = "jd_not_software"
     UNDECIDED = "undecided"  # the intake model was unsure or returned nothing usable
     NO_KNOWN_SKILLS = "no_known_skills"
+    RESUME_JD_NO_MATCH = "resume_jd_no_match"  # the resume shows nothing the JD asks for
     PREP_ERROR = "prep_error"
 
 

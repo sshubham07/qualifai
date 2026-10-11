@@ -18,13 +18,15 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-12 Seed-bank anchors loaded into topic-pack prompts
 - [ ] T-13 Progressive readiness (FR-9): mark startable after intro + 2 packs
 - [ ] T-14 Log unknown skills / unsupported roles to `demand_log`
-- [ ] T-15 Prep progress → Redis pub/sub → SSE
+- [ ] T-15 Prep progress → Redis pub/sub → SSE (interim, done: each step is stored as a `prep_step` event when it starts, and the status page polls it to show done / running / pending)
 - [x] T-16 Intake gate as the first prep step (ADR-0016): resume and JD must both be software roles; FAILED with `failure_code` + reason shown on the status page
+- [x] T-17 Resume–JD match check after extraction (ADR-0018): FAILED with `resume_jd_no_match` and a reason naming the skills only when nothing overlaps; FAILED is terminal
+- [x] T-18 Opening question written in prep (`opening_question` task), stored in the kit and returned by the status endpoint when READY
 
 ## API & live loop (Phase 2)
 - [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue; returns `meet_id`)
 - [x] T-21 `GET /v1/interviews/{id}` with `server_now`
-- [ ] T-22 `POST /start` (auth, window, schedule hard stop, first question)
+- [ ] T-22 `POST /start` (auth, window, schedule hard stop, first question = the kit's opening question; stop returning it from the status endpoint)
 - [ ] T-23 `POST /answers` (integrity events, resume graph, enqueue eval on end)
 - [ ] T-24 `hard_stop_job` (auto-submit draft, resume with time_up)
 - [ ] T-25 Postgres checkpointer wiring + graph version in state

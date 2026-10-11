@@ -62,7 +62,8 @@ export type StatusOut = Accepted & {
   support: string | null;
   failure_code: string | null;
   failure_reason: string | null;
-  progress: string[];
+  progress: string[]; // prep steps started so far; while preparing the last one is running
+  opening_question: string | null; // set once the interview is ready
   expires_at: string | null;
   server_now: string;
 };

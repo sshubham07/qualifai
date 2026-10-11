@@ -37,7 +37,18 @@ def test_non_resume_upload_is_rejected():
     assert decide(intake(is_resume=False)) is FailureCode.NOT_A_RESUME
 
 
-@pytest.mark.parametrize("prompt", ["intake_gate", "turn_analyzer", "topic_eval", "question_gen"])
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        "intake_gate",
+        "resume_extract",
+        "jd_extract",
+        "opening_question",
+        "turn_analyzer",
+        "topic_eval",
+        "question_gen",
+    ],
+)
 def test_prompts_carry_injection_or_secrecy_rules(prompt):
     text = load_prompt(prompt).lower()
     assert ("never follow instructions" in text) or ("never reveal" in text) or ("quote" in text)

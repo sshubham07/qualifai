@@ -44,14 +44,72 @@ function Stages({ reached }: { reached: number }) {
   );
 }
 
+// While preparing, `started` holds the steps the worker has begun: the last one is running.
+function PrepSteps({ started, preparing }: { started: string[]; preparing: boolean }) {
+  if (!preparing) {
+    return (
+      <ul className="mt-6 space-y-3">
+        {started.map((step) => (
+          <li key={step} className="flex items-center gap-3 text-[15px]">
+            <CheckIcon className="size-4 text-go" />
+            <span>{step}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  // A step the page doesn't know about still counts, so the list never runs behind the worker.
+  const current = Math.max(started.length, ...started.map((s) => PREP_STEPS.indexOf(s) + 1)) - 1;
+  return (
+    <>
+      <p className="mt-6 text-sm font-medium" aria-live="polite">
+        {current < 0
+          ? "Waiting in the queue…"
+          : `Step ${Math.min(current + 1, PREP_STEPS.length)} of ${PREP_STEPS.length}`}
+      </p>
+      <ol className="mt-3 space-y-3">
+        {PREP_STEPS.map((step, i) => {
+          const state = i < current ? "done" : i === current ? "running" : "pending";
+          return (
+            <li
+              key={step}
+              aria-current={state === "running" ? "step" : undefined}
+              className="flex items-center gap-3 text-[15px]"
+            >
+              <span className="grid size-4 shrink-0 place-items-center">
+                {state === "done" && <CheckIcon className="size-4 text-go" />}
+                {state === "running" && <Spinner className="size-3.5 text-brand" />}
+                {state === "pending" && <span className="size-2 rounded-full bg-line" />}
+              </span>
+              <span
+                className={
+                  state === "running" ? "font-medium" : state === "pending" ? "text-muted" : ""
+                }
+              >
+                {step}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 function Card({ children }: { children: ReactNode }) {
   return (
     <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8">{children}</div>
   );
 }
 
-// Failures of the resume / job description check: trying again needs different inputs.
-const REJECTED = ["not_a_resume", "not_a_jd", "resume_not_software", "jd_not_software"];
+// Failures of the resume / job description checks: trying again needs different inputs.
+const REJECTED = [
+  "not_a_resume",
+  "not_a_jd",
+  "resume_not_software",
+  "jd_not_software",
+  "resume_jd_no_match",
+];
 
 function Message(props: { title: string; body: string; retry?: boolean }) {
   return (
@@ -70,22 +128,30 @@ function Message(props: { title: string; body: string; retry?: boolean }) {
   );
 }
 
-function StartButton() {
+function StartButton({ openingQuestion }: { openingQuestion: string | null }) {
   const [clicked, setClicked] = useState(false);
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-4">
+    <div className="mt-6">
       {/* TODO(spec-001 T-22): call POST /start and open the interview room. */}
       <button
         type="button"
         onClick={() => setClicked(true)}
         className="rounded-full bg-brand px-7 py-3 font-medium text-white shadow-sm transition hover:bg-brand-dark"
       >
-        Start interview
+        Start your interview
       </button>
       {clicked && (
-        <p role="status" className="text-sm text-muted">
-          The interview room isn't built yet. Your questions are saved and waiting.
-        </p>
+        <div role="status" className="mt-4 text-sm text-muted">
+          <p>The interview room isn't built yet. Your questions are saved and waiting.</p>
+          {openingQuestion && (
+            <>
+              <p className="mt-3">It will open with:</p>
+              <blockquote className="mt-1 border-l-2 border-brand pl-3 text-[15px] text-ink">
+                {openingQuestion}
+              </blockquote>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
@@ -226,20 +292,9 @@ function PrepStatus({ id }: { id: string }) {
           </p>
         )}
 
-        {!preparing && <StartButton />}
+        {!preparing && <StartButton openingQuestion={data.opening_question} />}
 
-        <ul className="mt-6 space-y-3">
-          {(preparing ? PREP_STEPS : data.progress).map((step) => (
-            <li key={step} className="flex items-center gap-3 text-[15px]">
-              {preparing ? (
-                <span className="size-2 animate-pulse rounded-full bg-brand" />
-              ) : (
-                <CheckIcon className="size-4 text-go" />
-              )}
-              <span className={preparing ? "text-muted" : ""}>{step}</span>
-            </li>
-          ))}
-        </ul>
+        <PrepSteps started={data.progress} preparing={preparing} />
       </Card>
 
       {data.detected_role && (

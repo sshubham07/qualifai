@@ -1,6 +1,7 @@
 """Job: run the intake gate, build the interview kit, mark READY (+ expires_at = now + 7d) and,
-if an email was given, send the 'ready' email. Anything that stops prep leaves the interview FAILED
-with a reason."""
+if an email was given, send the 'ready' email. Anything that stops prep (not a software role, a
+resume that doesn't fit the JD, an error) leaves the interview FAILED with a reason; FAILED is a
+dead end (ADR-0018)."""
 
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ from qualifai.db.models import Interview, InterviewEvent, InterviewKit, User
 from qualifai.db.session import SessionFactory
 from qualifai.domain.clock import Clock, SystemClock
 from qualifai.domain.enums import CompanyTier, FailureCode, InterviewStatus, RoundType
-from qualifai.domain.errors import LLMOutputError
+from qualifai.domain.errors import LLMOutputError, PrepRejected
 from qualifai.domain.failures import FAILURE_REASONS
 from qualifai.domain.lifecycle import transition
 from qualifai.domain.models import InterviewRequest
@@ -32,6 +33,7 @@ from qualifai.prep.pipeline import PreparedKit, prepare_kit
 
 log = structlog.get_logger(__name__)
 SendReady = Callable[[str, str, str], Awaitable[None]]  # (to, link, expires_on)
+PREP_STEP = "prep_step"  # InterviewEvent type: one row per step, written as the step starts
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,10 +62,12 @@ def _request(interview: Interview) -> InterviewRequest:
     )
 
 
-async def _fail(session: AsyncSession, interview: Interview, code: FailureCode) -> None:
+async def _fail(
+    session: AsyncSession, interview: Interview, code: FailureCode, reason: str | None = None
+) -> None:
     interview.status = transition(InterviewStatus.PREPARING, InterviewStatus.FAILED).value
     interview.failure_code = code.value
-    interview.failure_reason = FAILURE_REASONS[code]
+    interview.failure_reason = reason or FAILURE_REASONS[code]
     await session.commit()
     log.warning("prep.failed", interview_id=str(interview.id), code=code.value)
 
@@ -99,6 +103,11 @@ async def prepare_interview(session: AsyncSession, deps: PrepDeps, interview_id:
 
     async def progress(step: str) -> None:  # TODO(spec-001 T-15): publish to Redis pub/sub → SSE
         steps.append(step)
+        # Committed straight away so the status page can show which step is running.
+        session.add(
+            InterviewEvent(interview_id=interview_id, type=PREP_STEP, payload={"step": step})
+        )
+        await session.commit()
         log.info("prep.progress", interview_id=str(interview_id), step=step)
 
     req = _request(interview)
@@ -107,12 +116,12 @@ async def prepare_interview(session: AsyncSession, deps: PrepDeps, interview_id:
         if not await _passes_gate(session, deps.llm, interview, req):
             return
         kit: PreparedKit = await prepare_kit(deps.llm, req, progress)
+    except PrepRejected as stop:  # nothing to ask about, or the resume doesn't fit the JD
+        await _fail(session, interview, stop.code, stop.reason)
+        return
     except Exception:
         await _fail(session, interview, FailureCode.PREP_ERROR)
         raise
-    if not kit.plan.topics:
-        await _fail(session, interview, FailureCode.NO_KNOWN_SKILLS)
-        return
 
     # Magic link, only when there is an email to send it to; only the hash is stored.
     token = secrets.token_urlsafe(32) if user else None

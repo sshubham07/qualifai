@@ -36,6 +36,12 @@ def test_lifecycle_allows_happy_path_and_rejects_skips():
         transition(InterviewStatus.EXPIRED, InterviewStatus.IN_PROGRESS)
 
 
+@pytest.mark.parametrize("target", list(InterviewStatus))
+def test_failed_is_a_dead_end(target):
+    with pytest.raises(InterviewStateError):
+        transition(InterviewStatus.FAILED, target)
+
+
 @pytest.mark.parametrize("r", list(RoundType))
 def test_every_round_template_loads(r):
     assert round_template(r).id is r

@@ -36,7 +36,8 @@ class InterviewStatusOut(BaseModel):
     support: str | None = None
     failure_code: str | None = None
     failure_reason: str | None = None
-    progress: list[str] = []
+    progress: list[str] = []  # prep steps started so far; while PREPARING the last is running
+    opening_question: str | None = None  # READY only; moves behind POST /start with T-22
     expires_at: datetime | None = None
     started_at: datetime | None = None
     target_end_at: datetime | None = None

@@ -66,7 +66,7 @@ class ResumeClaim(Frozen):
 
 
 class JDSkill(Frozen):
-    name: str  # canonical skill id, e.g. "postgresql"
+    name: str  # canonical skill id, e.g. "postgresql" (lowercased raw name if not in taxonomy)
     weight: int = Field(ge=1, le=3)
     must_have: bool
 
@@ -79,6 +79,14 @@ class GapRow(Frozen):
     probe_type: ProbeType
     priority_score: float
     claim_id: str | None = None
+
+
+class MatchReport(Frozen):
+    """How much of what the JD asks for the resume shows, weighted by JD weight."""
+
+    score: float = Field(ge=0, le=1)
+    matched: tuple[str, ...]
+    missing: tuple[str, ...]
 
 
 class Rubric(Frozen):

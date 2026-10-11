@@ -30,6 +30,7 @@
 | 🔍 **Evidence or no score** | Every score cites a quote that is checked against the transcript. |
 | 🏢 **Company-aware** | Service · startup · product · MAANG bars. |
 | 🚦 **Software roles only** | A small local model checks the resume and the JD first. If either isn't software, it stops and says why. |
+| 🧩 **Resume must fit the JD** | Code compares what the JD asks for with what your resume shows. If they are totally off, it stops and names the skills. |
 | 🔗 **No sign-up** | Paste and go. You get a Meet ID to check whether your interview is preparing or ready. |
 
 <details>

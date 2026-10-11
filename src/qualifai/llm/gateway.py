@@ -14,7 +14,7 @@ from collections.abc import AsyncIterator
 from typing import Protocol, TypeVar
 
 import structlog
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, BadRequestError
 from pydantic import BaseModel, ValidationError
 from tenacity import (
     AsyncRetrying,
@@ -66,18 +66,25 @@ class LLMGateway:
         route = self._router.route(task)
         client = self._clients[route.provider]
         started = time.perf_counter()
-        resp = await client.chat.completions.create(
-            model=route.model,
-            temperature=route.temperature,
-            max_tokens=route.max_tokens,
-            timeout=route.timeout_s,
-            extra_body=_extra(route),
-            response_format={
-                "type": "json_schema",
-                "json_schema": {"name": schema.__name__, "schema": schema.model_json_schema()},
-            },
-            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        )
+        try:
+            resp = await client.chat.completions.create(
+                model=route.model,
+                temperature=route.temperature,
+                max_tokens=route.max_tokens,
+                timeout=route.timeout_s,
+                extra_body=_extra(route),
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {"name": schema.__name__, "schema": schema.model_json_schema()},
+                },
+                messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            )
+        except BadRequestError as exc:
+            # Some providers validate the JSON themselves and answer 400 when the model ran out
+            # of tokens or wrote something off-schema: that is bad output, so it is retried.
+            if exc.code != "json_validate_failed":
+                raise
+            raise LLMOutputError(f"{task}: provider rejected the model's JSON") from exc
         content = resp.choices[0].message.content
         if not content:
             raise LLMOutputError(f"{task}: empty response")

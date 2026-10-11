@@ -1,6 +1,6 @@
 # Plan 001
 
-Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015.
+Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015, 0016, 0017, 0018.
 
 ## Modules
 | Area | Module | Kind |
@@ -8,6 +8,8 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 
 | Intake | `prep/intake_gate.py` | LLM classify + code decide |
 | Extraction | `prep/extraction.py`, `prep/taxonomy.py` | LLM + dictionary normalisation |
 | Gap matrix | `prep/gap_matrix.py` | pure |
+| Resume–JD match | `prep/match.py` | pure |
+| Opening question | `prep/opening.py` | LLM |
 | Planner | `prep/planner.py` | pure |
 | Topic packs | `prep/topic_packs.py` | LLM (parallel) + seed anchors |
 | Clock | `interview/time_window.py` | pure |
@@ -21,7 +23,9 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 
 1. `POST /v1/interviews` (JSON: resume text, JD text, tier, experience range) → dedupe by input hash →
    SUBMITTED→PREPARING → enqueue `prepare_interview_job`.
 2. Worker: intake gate (`run_intake` → `decide`; a rejection is FAILED with a reason, ADR-0016) →
-   `prepare_kit` (progress → Redis pub/sub → SSE) → kit stored → READY → email.
+   `prepare_kit`: extraction → gap matrix → match check (a mismatch is FAILED with a reason,
+   ADR-0018) → plan → topic packs + opening question (progress → Redis pub/sub → SSE) → kit
+   stored → READY → email.
 3. `POST /start`: TimeWindow.for_duration → persist window → schedule `hard_stop_job` at
    hard_end + 60 s → `InterviewService.start` → first question.
 4. `POST /answers`: integrity events → `submit_answer` (graph resumes) → next question or end →

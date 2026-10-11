@@ -87,6 +87,13 @@ def skill_aliases() -> dict[str, str]:
 
 
 @cache
+def skill_parents() -> dict[str, str]:
+    """skill id -> parent skill id (fastapi -> python): evidence of the child shows the parent."""
+    raw = _load(CONTENT_DIR / "skills" / "_taxonomy.yaml")
+    return {k: spec["parent"] for k, spec in raw["skills"].items() if spec.get("parent")}
+
+
+@cache
 def seed_anchors(skill: str) -> str:
     """Compact text rendering of content/skills/<skill>.yaml for prompts ('' if no seed bank).
     Missing seed bank → topic is generated 'unanchored' and flagged lower-confidence (ADR-0011)."""

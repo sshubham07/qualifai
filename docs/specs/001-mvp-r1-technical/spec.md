@@ -19,10 +19,10 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 |---|---|
 | FR-1 | Intake gate (first step of the prep job, small local model) classifies the role family of the resume and of the JD; unless both are software roles the interview is FAILED with a reason before any extraction or question writing; an undecided model fails the same way; demand is logged |
 | FR-2 | Non-resume / non-JD text fails the gate with a reason; size limits enforced at submit; injection markers flagged, not obeyed |
-| FR-3 | Prep extracts a claims ledger and weighted JD skills, normalised via the taxonomy |
+| FR-3 | Prep extracts a claims ledger (with years of experience) and weighted JD skills, normalised via the taxonomy; a child skill shows its parent (FastAPI → Python) |
 | FR-4 | Gap matrix classifies each JD skill: verify claim / test gap / light |
 | FR-5 | Planner allocates phase budgets from the round template and a must/should/bonus topic pool |
-| FR-6 | Topic packs (opening questions, rubric, follow-up hooks) are generated per topic, grounded in seed banks |
+| FR-6 | Topic packs (opening questions, rubric, follow-up hooks) are generated per topic, grounded in seed banks; the interview's opening question is written from the candidate's lead claims, the JD's must topics and the experience range, and stored in the kit |
 | FR-7 | Submission returns a `meet_id` to check status with (ADR-0017). Kit READY → email with link only if an email was given; `expires_at = ready_at + 7d`; daily sweep expires kits and deletes resume text |
 | FR-8 | Start requires owner auth, READY, not expired, not started; one attempt per kit |
 | FR-9 | Progressive readiness: "ready to start" once intro + first 2 topic packs exist |
@@ -34,6 +34,7 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 | FR-15 | Evaluation per topic with anchored levels + quotes; unverifiable quotes dropped |
 | FR-16 | Verdict computed by code: weighted by JD, gates, tier thresholds; "insufficient evidence" when must coverage < 75% |
 | FR-17 | Report shows coverage, confidence, claims verification table, topic breakdown, deciding gap, prep plan |
+| FR-18 | Resume–JD match (code, after extraction, before any question is written): which JD skills the resume shows (a claim carries the skill, or the resume text names it or an alias). Only a totally-off pair, where the resume shows none of them, is FAILED, with a reason naming the skills (ADR-0018); any overlap goes ahead and the gaps become questions. FAILED is terminal: no retry, a new submission is a new interview |
 
 ## Non-functional requirements
 | ID | Requirement |
@@ -48,6 +49,10 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 ## Acceptance criteria (examples)
 - **AC-1** Given an MBA JD (or a non-software resume), when the prep job runs, then the interview is
   FAILED with `jd_not_software` (or `resume_not_software`) and a reason, and no kit is prepared.
+- **AC-6** Given a software resume that shows none of the skills a software JD asks for, when the
+  prep job runs, then the interview is FAILED with `resume_jd_no_match`, the reason names the
+  skills, no question is written, and the interview never leaves FAILED. A resume that shows
+  even one of them goes ahead to READY.
 - **AC-2** Given 6 min remaining and two unvisited must topics needing 3 min each plus 2 min
   closing, when a strong answer arrives, then the policy does **not** follow up.
 - **AC-3** Given the clock passes hard_end with no answer, then the interview completes with

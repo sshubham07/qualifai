@@ -11,6 +11,7 @@ GET  /v1/interviews/{id}/report   report JSON (HTML via ?format=html)
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from qualifai.api.deps import Submit, get_clock, get_submit
@@ -21,12 +22,22 @@ from qualifai.api.schemas import (
     InterviewStatusOut,
     NextQuestionOut,
 )
-from qualifai.db.models import Interview, InterviewKit
+from qualifai.db.models import Interview, InterviewEvent, InterviewKit
 from qualifai.db.session import get_session
 from qualifai.domain.clock import Clock
 from qualifai.domain.enums import InterviewStatus, RoleFamily
 
 router = APIRouter(prefix="/interviews", tags=["interviews"])
+
+
+async def _prep_steps(session: AsyncSession, interview_id: UUID) -> list[str]:
+    """Steps the prep job has started, in order; the last one is running (or where it stopped)."""
+    payloads = await session.scalars(
+        select(InterviewEvent.payload)
+        .where(InterviewEvent.interview_id == interview_id, InterviewEvent.type == "prep_step")
+        .order_by(InterviewEvent.id)
+    )
+    return list(dict.fromkeys(p["step"] for p in payloads))  # a redelivered job repeats steps
 
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=InterviewAccepted)
@@ -47,16 +58,20 @@ async def get_interview(
     if interview is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Interview not found")
     kit = await session.get(InterviewKit, interview_id)
+    status_ = InterviewStatus(interview.status)
     return InterviewStatusOut(
         meet_id=interview.id,
-        status=InterviewStatus(interview.status),
+        status=status_,
         detected_role=None
         if interview.role_family == RoleFamily.UNKNOWN
         else interview.role_family,
         support=interview.support_level,
         failure_code=interview.failure_code,
         failure_reason=interview.failure_reason,
-        progress=kit.prep_progress if kit else [],
+        progress=await _prep_steps(session, interview_id) or (kit.prep_progress if kit else []),
+        opening_question=kit.profile.get("opening_question")
+        if kit and status_ is InterviewStatus.READY
+        else None,
         expires_at=interview.expires_at,
         started_at=interview.started_at,
         target_end_at=interview.target_end_at,

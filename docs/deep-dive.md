@@ -44,7 +44,7 @@ Everything the [README](../README.md) leaves out: design, models, judgement, sto
 
 | Phase | What happens | Mode |
 |---|---|---|
-| **① Prep** | Intake gate (role check) → resume/JD extraction → gap matrix → time-budgeted plan → topic packs (questions, rubrics, follow-up hooks) → **READY** (email only if one was given; the candidate checks back with the meet id) | async worker, large model, minutes |
+| **① Prep** | Intake gate (role check) → resume/JD extraction → gap matrix → **match check** (stops only if the resume shows nothing the JD asks for) → time-budgeted plan → topic packs (questions, rubrics, follow-up hooks) + opening question → **READY** (email only if one was given; the candidate checks back with the meet id) | async worker, large model, minutes |
 | **② Live interview** | Question → answer → Turn Analyzer → **Policy** (time + signals) → next question; ends naturally around the target time | LangGraph loop, fast models, seconds |
 | **③ Evaluation** | Per-topic scores with quotes → evidence check → aggregation → gates → verdict → narrative → HTML report | async worker, large model, minutes |
 
@@ -115,7 +115,7 @@ stateDiagram-v2
   direction LR
   [*] --> SUBMITTED
   SUBMITTED --> PREPARING: stored · prep enqueued
-  PREPARING --> FAILED: not a software resume + JD · reason shown
+  PREPARING --> FAILED: not software, or resume doesn't fit the JD · reason shown · dead end
   PREPARING --> READY: kit built · email if given
   READY --> IN_PROGRESS: start
   READY --> EXPIRED: 7 days
@@ -193,6 +193,7 @@ lives in [`content/models.yaml`](../content/models.yaml), so models change throu
 | Prep | Resume → claims ledger | Large | gpt-oss-120b (hosted free tier) | Extraction quality drives everything downstream |
 | Prep | JD → weighted skills | Large | gpt-oss-120b | Same |
 | Prep | Topic packs (questions, rubric, hooks) | Large | gpt-oss-120b | **Biggest quality lever**: good rubrics make small live models judge well |
+| Prep | Opening question | Large | gpt-oss-120b | The first thing the candidate reads; written once, from their lead claims and the JD's must topics |
 | Live | Turn Analyzer (signals) | Medium | gpt-oss-20b | Judgement on narrow criteria, needs speed |
 | Live | Question Generator (phrasing) | Small | Gemma 4 (local) | Only phrasing a decided action |
 | Live (V2) | Coding helper | Medium | gpt-oss-20b | Clarifications, hints within limits |
@@ -276,7 +277,9 @@ flowchart TB
   subgraph W1["Prep · worker"]
     a1[POST /interviews] --> a4[enqueue prepare] --> a2{Intake gate}
     a2 -- not software / undecided --> a3[FAILED + reason]
-    a2 -- ok --> a5[extract resume + JD] --> a6[gap matrix] --> a7[plan] --> a8[topic packs ∥] --> a9[READY + email if given]
+    a2 -- ok --> a5[extract resume + JD] --> a6[gap matrix] --> m{resume fits JD?}
+    m -- no --> a3
+    m -- yes --> a7[plan] --> a8[topic packs ∥ opening question] --> a9[READY + email if given]
   end
   subgraph W2["Live · API + LangGraph"]
     b1[POST /start] --> b2[TimeWindow + schedule hard stop] --> b3[[turn loop]] --> b4[COMPLETED]

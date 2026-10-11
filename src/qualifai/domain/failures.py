@@ -1,4 +1,5 @@
-"""The sentence a candidate reads for each failure code."""
+"""The sentence a candidate reads for each failure code. A step that knows more (which skills
+are missing) stores a more specific sentence instead."""
 
 from qualifai.domain.enums import FailureCode
 
@@ -20,6 +21,10 @@ FAILURE_REASONS: dict[FailureCode, str] = {
     FailureCode.NO_KNOWN_SKILLS: (
         "The job description lists no skills we can ask about yet, so there was nothing to "
         "build an interview from."
+    ),
+    FailureCode.RESUME_JD_NO_MATCH: (
+        "The resume shows none of the skills this job description asks for, so there was "
+        "nothing of yours to interview you on."
     ),
     FailureCode.PREP_ERROR: "Something went wrong on our side while preparing the interview.",
 }
