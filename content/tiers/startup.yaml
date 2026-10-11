@@ -1,5 +1,5 @@
-id: midscale
-name: Mid-scale / startup
+id: startup
+name: Startup
 difficulty_offset: 0
 max_depth: 3
 challenge_threshold: 0.6

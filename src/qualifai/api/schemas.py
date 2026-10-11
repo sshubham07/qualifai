@@ -3,9 +3,25 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from qualifai.domain.enums import InterviewStatus
+from qualifai.domain.enums import InterviewStatus, RoundType
+from qualifai.domain.models import InterviewRequest
+
+
+class InterviewIn(InterviewRequest):
+    """POST /v1/interviews body: the interview request plus who it is for."""
+
+    email: str = Field(max_length=320, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    round_type: RoundType = RoundType.R1_TECHNICAL
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalise_email(cls, v: object) -> object:
+        return v.strip().lower() if isinstance(v, str) else v
+
+    def to_request(self) -> InterviewRequest:
+        return InterviewRequest(**self.model_dump(exclude={"email"}))
 
 
 class InterviewAccepted(BaseModel):
@@ -18,6 +34,8 @@ class InterviewAccepted(BaseModel):
 class InterviewStatusOut(BaseModel):
     interview_id: UUID
     status: InterviewStatus
+    detected_role: str
+    support: str
     progress: list[str] = []
     expires_at: datetime | None = None
     started_at: datetime | None = None

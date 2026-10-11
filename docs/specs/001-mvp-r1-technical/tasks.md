@@ -13,7 +13,7 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-08 Architecture tests (import rules) + import-linter contracts
 
 ## Prep (Phase 1)
-- [ ] T-10 `prepare_interview_job`: load request, call `prepare_kit`, persist kit, READY, email
+- [x] T-10 `prepare_interview_job`: load request, call `prepare_kit`, persist kit, READY, email
 - [ ] T-11 Contract tests for ResumeExtraction / JDExtraction / TopicPack with recorded fixtures
 - [x] T-12 Seed-bank anchors loaded into topic-pack prompts
 - [ ] T-13 Progressive readiness (FR-9): mark startable after intro + 2 packs
@@ -21,8 +21,8 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [ ] T-15 Prep progress → Redis pub/sub → SSE
 
 ## API & live loop (Phase 2)
-- [ ] T-20 `POST /v1/interviews` (PDF→text, intake, dedupe, enqueue)
-- [ ] T-21 `GET /v1/interviews/{id}` with `server_now`
+- [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue)
+- [x] T-21 `GET /v1/interviews/{id}` with `server_now`
 - [ ] T-22 `POST /start` (auth, window, schedule hard stop, first question)
 - [ ] T-23 `POST /answers` (integrity events, resume graph, enqueue eval on end)
 - [ ] T-24 `hard_stop_job` (auto-submit draft, resume with time_up)
@@ -38,5 +38,5 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 
 ## Ops
 - [ ] T-40 `expire_kits` daily sweep + resume deletion
-- [ ] T-41 Initial Alembic migration
+- [x] T-41 Initial Alembic migration
 - [ ] T-42 Evals harness: 3 simulated candidates (strong / weak / bluffer)

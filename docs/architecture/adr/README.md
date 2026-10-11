@@ -17,3 +17,5 @@ Format: MADR-lite. New ADRs via the `write-adr` skill. Never edit an accepted de
 | [0011](0011-retrieval-as-supporting-component.md) | Retrieval only as a supporting component (V2), via pgvector | Accepted |
 | [0012](0012-flexible-time-window.md) | Flexible time window instead of a hard deadline | Accepted |
 | [0013](0013-role-family-gate.md) | Role-family intake gate; Backend SDE only in MVP | Accepted |
+| [0014](0014-text-intake-and-company-types.md) | Text-only intake; company types are service, startup, product, MAANG | Accepted |
+| [0015](0015-react-vite-spa-served-by-api.md) | Frontend is a React + Vite single-page app served by the API | Accepted |

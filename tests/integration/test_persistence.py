@@ -4,17 +4,6 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-testcontainers = pytest.importorskip("testcontainers.postgres")
-
-
-@pytest.fixture(scope="module")
-def pg_url():
-    try:
-        with testcontainers.PostgresContainer("pgvector/pgvector:pg16", driver="asyncpg") as pg:
-            yield pg.get_connection_url()
-    except Exception as exc:  # Docker not available
-        pytest.skip(f"Docker unavailable: {exc}")
-
 
 async def test_schema_creates_and_turns_are_unique_per_seq(pg_url):
     from uuid import uuid4
@@ -30,7 +19,8 @@ async def test_schema_creates_and_turns_are_unique_per_seq(pg_url):
     Session = async_sessionmaker(engine, expire_on_commit=False)
     uid, iid = uuid4(), uuid4()
     async with Session() as s:
-        s.add(User(id=uid, email="c@example.com"))
+        s.add(User(id=uid, email=f"{uid}@example.com"))
+        await s.flush()  # no ORM relationship → flush order is not FK-aware
         s.add(
             Interview(
                 id=iid,
@@ -43,6 +33,8 @@ async def test_schema_creates_and_turns_are_unique_per_seq(pg_url):
                 target_minutes=45,
                 input_hash="h",
                 jd_text="jd",
+                experience_min_years=3,
+                experience_max_years=5,
             )
         )
         s.add(TurnRow(id=uuid4(), interview_id=iid, seq=1, role="interviewer", text="Q1"))

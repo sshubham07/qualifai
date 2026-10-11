@@ -51,8 +51,8 @@ def test_same_performance_product_tier_is_lean_hire_without_gate_effect():
     assert r.band is HiringBand.LEAN_HIRE and r.gates_applied == ()
 
 
-def test_faang_tier_is_stricter():
-    assert compute_verdict(vin(CompanyTier.FAANG)).band is HiringBand.LEAN_NO_HIRE
+def test_maang_tier_is_stricter():
+    assert compute_verdict(vin(CompanyTier.MAANG)).band is HiringBand.LEAN_NO_HIRE
 
 
 def test_coverage_gate_withholds_verdict():

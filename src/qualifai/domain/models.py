@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from qualifai.domain.enums import (
     AnswerIntent,
@@ -35,7 +35,13 @@ class InterviewRequest(Frozen):
     experience_min_years: int = Field(ge=0, le=40)
     experience_max_years: int = Field(ge=0, le=40)
     target_minutes: int = Field(default=45, ge=20, le=90)
-    company_name: str | None = None
+    company_name: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def _experience_range_is_ordered(self) -> InterviewRequest:
+        if self.experience_min_years > self.experience_max_years:
+            raise ValueError("experience_min_years must not exceed experience_max_years")
+        return self
 
 
 class IntakeResult(Frozen):

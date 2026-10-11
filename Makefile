@@ -22,6 +22,12 @@ api: ## Run API with reload
 worker: ## Run background worker (prep / evaluation / cleanup)
 	$(PY) arq qualifai.workers.worker.WorkerSettings
 
+web: ## Run the web app with hot reload (http://localhost:3000, proxies /v1 to the API)
+	cd frontend && npm install && npm run dev
+
+web-build: ## Build the web app into frontend/dist (the API then serves it)
+	cd frontend && npm ci && npm run build
+
 migrate: ## Apply DB migrations
 	$(PY) alembic upgrade head
 

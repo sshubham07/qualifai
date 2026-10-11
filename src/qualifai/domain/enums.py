@@ -13,9 +13,9 @@ class RoundType(StrEnum):
 
 class CompanyTier(StrEnum):
     SERVICE = "service"
-    MIDSCALE = "midscale"
+    STARTUP = "startup"
     PRODUCT = "product"
-    FAANG = "faang"
+    MAANG = "maang"
 
 
 class RoleFamily(StrEnum):

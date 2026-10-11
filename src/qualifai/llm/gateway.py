@@ -16,7 +16,12 @@ from typing import Protocol, TypeVar
 import structlog
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ValidationError
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    AsyncRetrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from qualifai.domain.errors import LLMOutputError
 from qualifai.llm.router import ModelRouter
@@ -24,6 +29,7 @@ from qualifai.llm.tasks import LLMTask
 
 log = structlog.get_logger(__name__)
 T = TypeVar("T", bound=BaseModel)
+_RETRY_WAIT = wait_exponential(min=0.5, max=4)
 
 
 class LLM(Protocol):
@@ -39,13 +45,20 @@ class LLMGateway:
         self._router = router
         self._clients = clients
 
-    @retry(
-        retry=retry_if_exception_type((ValidationError, LLMOutputError)),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(min=0.5, max=4),
-        reraise=True,
-    )
     async def structured(self, task: LLMTask, system: str, user: str, schema: type[T]) -> T:
+        # AsyncRetrying rather than @retry: the decorator erases the signature, so the class
+        # would no longer satisfy the LLM protocol under mypy.
+        async for attempt in AsyncRetrying(
+            retry=retry_if_exception_type((ValidationError, LLMOutputError)),
+            stop=stop_after_attempt(3),
+            wait=_RETRY_WAIT,
+            reraise=True,
+        ):
+            with attempt:
+                return await self._structured_once(task, system, user, schema)
+        raise LLMOutputError(f"{task}: no attempt was made")  # unreachable; keeps mypy honest
+
+    async def _structured_once(self, task: LLMTask, system: str, user: str, schema: type[T]) -> T:
         route = self._router.route(task)
         client = self._clients[route.provider]
         started = time.perf_counter()

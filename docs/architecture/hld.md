@@ -19,14 +19,15 @@ flowchart LR
 ## 2. Components
 | Component | Responsibility | Tech |
 |---|---|---|
-| API | Validation, auth, intake gate (sync), start/answer endpoints, SSE | FastAPI |
+| Web | Thin single-page app: setup, prep status, interview, report; no AI in the browser | React + Vite, static build served by the API |
+| API | Validation, auth, intake gate (sync), start/answer endpoints, SSE, serves the built web app | FastAPI |
 | Worker | Prep pipeline, evaluation pipeline, hard-stop jobs, daily expiry | arq on Redis |
 | Interview engine | LangGraph loop + Policy + Context Compiler + TimeWindow | LangGraph, pure Python |
 | LLM Gateway | Task routing, structured output + validation + retries, streaming, telemetry | openai SDK (OpenAI-compatible) |
 | Content | Rounds, tiers, role families, skills, problems, model routes | YAML + Pydantic |
 | Persistence | Source of truth; checkpoints; JSONB for LLM outputs; pgvector (V2) | PostgreSQL 16 |
 | Ephemeral | Drafts, queue, delayed jobs, counters, rate limits | Redis 7 |
-| Files | Resume PDFs, rendered reports | S3-compatible (MinIO) |
+| Files | Rendered reports | S3-compatible (MinIO) |
 | Sandbox (V2) | Untrusted code execution | Judge0 / Docker + gVisor |
 
 ## 3. Lifecycle

@@ -36,8 +36,8 @@ It is **not a RAG application.** Retrieval appears only as a supporting componen
 | 3. Evaluation | Interview ends (natural / hard stop) | Report JSON + rendered HTML, email | async worker, large model |
 
 ## Inputs
-Resume (PDF) · JD (text) · Round (R1 Technical, R2 LLD, R3 HLD, R4 Managerial, HR, or full loop) ·
-Company tier (service, mid-scale, product, FAANG) · Experience range · Target duration ·
+Resume (text) · JD (text) · Round (R1 Technical, R2 LLD, R3 HLD, R4 Managerial, HR, or full loop) ·
+Company tier (service, startup, product, MAANG) · Experience range · Target duration ·
 Company name (optional, flavour only).
 
 ## Glossary

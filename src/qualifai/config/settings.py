@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     env: str = "local"
     secret_key: SecretStr = SecretStr("change-me")
     base_url: str = "http://localhost:3000"
+    frontend_dist: str = "frontend/dist"  # built web app, served by the API when present
 
     database_url: str = "postgresql+asyncpg://qualifai:qualifai@localhost:5432/qualifai"
     redis_url: str = "redis://localhost:6379/0"

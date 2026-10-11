@@ -5,7 +5,7 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 ~45-minute adaptive text interview, and delivers an evidence-backed report.
 
 ## User stories
-- **US-1** As a candidate, I submit my resume (PDF), a JD, round, tier, experience and duration
+- **US-1** As a candidate, I submit my resume (text), a JD (text), round, company tier (service, startup, product, MAANG), experience range and duration
   and immediately learn whether my role is supported.
 - **US-2** As a candidate, I'm told when my interview is ready and can start it within 7 days.
 - **US-3** As a candidate, I'm asked questions about *my* claims and the JD's priorities, with
@@ -23,7 +23,7 @@ A backend candidate submits resume + JD + round + company tier; QualifAI prepare
 | FR-4 | Gap matrix classifies each JD skill: verify claim / test gap / light |
 | FR-5 | Planner allocates phase budgets from the round template and a must/should/bonus topic pool |
 | FR-6 | Topic packs (opening questions, rubric, follow-up hooks) are generated per topic, grounded in seed banks |
-| FR-7 | Kit READY → email with link; `expires_at = ready_at + 7d`; daily sweep expires kits and deletes resume files |
+| FR-7 | Kit READY → email with link; `expires_at = ready_at + 7d`; daily sweep expires kits and deletes resume text |
 | FR-8 | Start requires owner auth, READY, not expired, not started; one attempt per kit |
 | FR-9 | Progressive readiness: "ready to start" once intro + first 2 topic packs exist |
 | FR-10 | Each answer is analysed into signals; the policy picks the next action; the LLM phrases it |

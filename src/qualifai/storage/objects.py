@@ -15,9 +15,5 @@ def client():  # type: ignore[no-untyped-def]
     )
 
 
-def resume_key(interview_id: str) -> str:
-    return f"resumes/{interview_id}.pdf"
-
-
 def report_key(interview_id: str) -> str:
     return f"reports/{interview_id}.html"

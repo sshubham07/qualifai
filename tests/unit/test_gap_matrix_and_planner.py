@@ -73,7 +73,7 @@ def test_plan_priorities_and_budgets():
 
 @pytest.mark.parametrize(
     ("tier", "years", "expected"),
-    [(CompanyTier.SERVICE, 3, 1), (CompanyTier.PRODUCT, 5, 3), (CompanyTier.FAANG, 8, 4)],
+    [(CompanyTier.SERVICE, 3, 1), (CompanyTier.PRODUCT, 5, 3), (CompanyTier.MAANG, 8, 4)],
 )
 def test_start_difficulty(tier, years, expected):
     assert start_difficulty(tier_preset(tier), years) == expected

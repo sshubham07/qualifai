@@ -49,8 +49,10 @@ class Interview(Base, Timestamped):
     support_level: Mapped[str] = mapped_column(String(16))
     target_minutes: Mapped[int] = mapped_column(Integer)
     input_hash: Mapped[str] = mapped_column(String(64), index=True)  # reuse kits for same inputs
-    resume_object_key: Mapped[str | None] = mapped_column(String(512))
+    resume_text: Mapped[str | None] = mapped_column(Text)  # nulled after completion / expiry
     jd_text: Mapped[str] = mapped_column(Text)
+    experience_min_years: Mapped[int] = mapped_column(Integer)
+    experience_max_years: Mapped[int] = mapped_column(Integer)
     company_name: Mapped[str | None] = mapped_column(String(200))
     ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)

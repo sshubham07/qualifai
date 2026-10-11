@@ -4,7 +4,7 @@ title: LRU Cache
 difficulty: medium
 tags: [hashing, linked_list, design]
 role_families: [backend_sde]
-tiers: [midscale, product, faang]
+tiers: [startup, product, maang]
 statement: |
   Implement an LRUCache(capacity) with get(key) -> int (-1 if missing) and put(key, value).
   Both operations must run in O(1) average time.

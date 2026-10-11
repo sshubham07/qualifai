@@ -1,6 +1,6 @@
 # Plan 001
 
-Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013.
+Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015.
 
 ## Modules
 | Area | Module | Kind |
@@ -18,7 +18,7 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013.
 | Jobs | `workers/jobs/*` | arq |
 
 ## Key flows
-1. `POST /v1/interviews` → PDF→text → `run_intake` (sync) → dedupe by input hash →
+1. `POST /v1/interviews` (JSON: resume text, JD text, tier, experience range) → `run_intake` (sync) → dedupe by input hash →
    SUBMITTED→PREPARING → enqueue `prepare_interview_job`.
 2. Worker: `prepare_kit` (progress → Redis pub/sub → SSE) → kit stored → READY → email.
 3. `POST /start`: TimeWindow.for_duration → persist window → schedule `hard_stop_job` at
