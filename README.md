@@ -72,39 +72,45 @@ Inputs: **Resume (PDF) · JD · Round** (R1 Technical, R2 LLD, R3 HLD, R4 Manage
 ## Architecture
 
 ```mermaid
-flowchart LR
-  subgraph Client
-    UI[Web app<br/>setup · interview · report]
-  end
-  subgraph App["QualifAI (modular monolith)"]
-    API[FastAPI<br/>REST + SSE]
-    subgraph Intelligence["Interview intelligence"]
-      PREP[Prep pipeline]
-      LOOP[LangGraph live loop]
-      POL[[Policy engine<br/>pure Python]]
-      CC[[Context compiler]]
-      EVAL[Evaluation pipeline]
+flowchart TB
+  UI["Web app<br/>setup · interview · report"]
+
+  subgraph App["QualifAI — modular monolith (one codebase, two processes)"]
+    subgraph Live["API process · live interview"]
+      API["FastAPI<br/>REST + SSE"]
+      LOOP["LangGraph live loop"]
+      POL[["Policy engine<br/>pure Python"]]
+      CC[["Context compiler"]]
+      API --> LOOP
+      LOOP -->|decides next action| POL
+      LOOP -->|bounded prompt| CC
     end
-    GW[LLM gateway<br/>task → model routing]
-    WK[arq worker]
+    subgraph Background["Worker process · background jobs"]
+      WK["arq worker"]
+      PREP["Prep pipeline"]
+      EVAL["Evaluation pipeline"]
+      WK --> PREP & EVAL
+    end
+    GW["LLM gateway<br/>task → model routing"]
   end
-  subgraph Data
-    PG[(PostgreSQL<br/>source of truth)]
-    RD[(Redis<br/>drafts · queue · timers)]
-    S3[(Object storage<br/>PDFs · reports)]
-  end
+
   subgraph Models["Open-weight models"]
-    OL[Ollama · local]
-    HF[Free hosted tier]
-    VL[vLLM · GPU]
+    OL["Ollama · local"]
+    HF["Free hosted tier"]
+    VL["vLLM · GPU"]
   end
-  UI <--> API
-  API --> LOOP
-  LOOP --> POL & CC
-  API --> RD --> WK --> PREP & EVAL
-  PREP & LOOP & EVAL --> GW --> OL & HF & VL
-  API & WK --> PG
-  API & WK --> S3
+
+  subgraph Data["Data"]
+    PG[("PostgreSQL<br/>source of truth")]
+    RD[("Redis<br/>drafts · queue · timers")]
+    S3[("Object storage<br/>PDFs · reports")]
+  end
+
+  UI <-->|REST + SSE| API
+  API -.->|jobs via Redis queue| WK
+  LOOP & PREP & EVAL -->|LLM calls| GW
+  GW --> Models
+  Live & Background -->|read / write| Data
 ```
 
 **Design principles**
