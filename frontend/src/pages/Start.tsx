@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Spinner } from "../components/icons";
 import {
   COMPANY_TYPES,
+  FOCUSES,
   LIMITS,
   type CompanyType,
+  type Focus,
   createInterview,
 } from "../lib/api";
+import { useGuide } from "../lib/guide";
 
 const inputClass =
   "rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[15px] placeholder:text-muted/60 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15";
@@ -15,10 +18,18 @@ function Section(props: {
   step: number;
   title: string;
   hint?: string;
+  active: boolean;
+  onEnter: () => void;
   children: ReactNode;
 }) {
   return (
-    <fieldset className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+    <fieldset
+      onFocus={props.onEnter}
+      onPointerDown={props.onEnter}
+      className={`rounded-2xl border bg-surface p-5 transition sm:p-6 ${
+        props.active ? "border-brand/50 shadow-sm" : "border-line"
+      }`}
+    >
       <legend className="sr-only">{props.title}</legend>
       <div className="mb-4 flex items-baseline gap-3">
         <span className="font-mono text-sm text-brand">0{props.step}</span>
@@ -68,15 +79,69 @@ function TextBlock(props: {
   );
 }
 
+function ChoiceCards<T extends string>(props: {
+  name: string;
+  label: string;
+  options: readonly { id: T; name: string; blurb: string; minutes?: number }[];
+  value: T | null;
+  onChange: (v: T) => void;
+  columns?: 2 | 3;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={props.label}
+      className={`grid gap-3 sm:grid-cols-2 ${props.columns === 3 ? "lg:grid-cols-3" : ""}`}
+    >
+      {props.options.map((option) => {
+        const selected = props.value === option.id;
+        return (
+          <label
+            key={option.id}
+            className={`cursor-pointer rounded-xl border p-4 transition has-focus-visible:ring-3 has-focus-visible:ring-brand/30 ${
+              selected ? "border-brand bg-brand-soft" : "border-line hover:border-brand/50"
+            }`}
+          >
+            <input
+              type="radio"
+              name={props.name}
+              value={option.id}
+              checked={selected}
+              onChange={() => props.onChange(option.id)}
+              className="sr-only"
+            />
+            <span className="flex items-center justify-between gap-2 font-medium">
+              {option.name}
+              <span
+                className={`size-4 shrink-0 rounded-full border-2 ${
+                  selected ? "border-brand bg-brand ring-2 ring-white ring-inset" : "border-line"
+                }`}
+              />
+            </span>
+            <span className="mt-1 block text-sm text-muted">{option.blurb}</span>
+            {option.minutes && (
+              <span className="mt-2 block font-mono text-xs text-muted">{option.minutes} min</span>
+            )}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+type SectionId = "intro" | "resume" | "jd" | "focus" | "company" | "years";
+
 function StartForm() {
   const navigate = useNavigate();
   const [resume, setResume] = useState("");
   const [jd, setJd] = useState("");
+  const [focus, setFocus] = useState<Focus>("r1_technical");
   const [company, setCompany] = useState<CompanyType | null>(null);
   const [minYears, setMinYears] = useState("");
   const [maxYears, setMaxYears] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [active, setActive] = useState<SectionId>("intro");
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -90,6 +155,7 @@ function StartForm() {
       const accepted = await createInterview({
         resume_text: resume.trim(),
         jd_text: jd.trim(),
+        round_type: focus,
         company_tier: company,
         experience_min_years: Number(minYears),
         experience_max_years: Number(maxYears),
@@ -101,9 +167,29 @@ function StartForm() {
     }
   }
 
+  const chosen = FOCUSES.find((f) => f.id === focus)!;
+  const picked = COMPANY_TYPES.find((c) => c.id === company);
+  const tips: Record<SectionId, string> = {
+    intro: "Hi! Five short steps. Click into any of them and I'll tell you what goes there.",
+    resume:
+      "Paste your whole resume as plain text. Keep the projects, the numbers and what you did yourself: those are what I ask about.",
+    jd: "Paste the job posting itself, with its must-have skills and responsibilities. I compare it with your resume to decide what to verify and what to test.",
+    focus: `${chosen.name}: ${chosen.blurb} About ${chosen.minutes} minutes. Not sure? General is the usual first technical round.`,
+    company: picked
+      ? `${picked.name}: ${picked.blurb} Pick the kind of company the job is at.`
+      : "Pick the kind of company the job is at. It sets how deep I go and how high the bar is.",
+    years:
+      "Enter the years the job asks for, for example 3 to 5. Not your own years: I read those from your resume.",
+  };
+  useGuide(
+    sending ? "Got it. Sending this over so I can start preparing." : (error ?? tips[active]),
+    sending || error ? "think" : active === "intro" ? "wave" : "talk",
+  );
+  const section = (id: SectionId) => ({ active: active === id, onEnter: () => setActive(id) });
+
   return (
     <form onSubmit={onSubmit} className="mt-8 space-y-5">
-      <Section step={1} title="Your resume" hint="Paste it as plain text.">
+      <Section step={1} {...section("resume")} title="Your resume" hint="Paste it as plain text.">
         <TextBlock
           id="resume"
           label="Resume"
@@ -115,7 +201,7 @@ function StartForm() {
         />
       </Section>
 
-      <Section step={2} title="The job description" hint="The posting you are preparing for.">
+      <Section step={2} {...section("jd")} title="The job description" hint="The posting you are preparing for.">
         <TextBlock
           id="jd"
           label="Job description"
@@ -127,43 +213,28 @@ function StartForm() {
         />
       </Section>
 
-      <Section step={3} title="Type of company" hint="This sets how deep the questions go and the bar for the verdict.">
-        <div role="radiogroup" aria-label="Type of company" className="grid gap-3 sm:grid-cols-2">
-          {COMPANY_TYPES.map((type) => {
-            const selected = company === type.id;
-            return (
-              <label
-                key={type.id}
-                className={`cursor-pointer rounded-xl border p-4 transition has-focus-visible:ring-3 has-focus-visible:ring-brand/30 ${
-                  selected
-                    ? "border-brand bg-brand-soft"
-                    : "border-line hover:border-brand/50"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="company"
-                  value={type.id}
-                  checked={selected}
-                  onChange={() => setCompany(type.id)}
-                  className="sr-only"
-                />
-                <span className="flex items-center justify-between font-medium">
-                  {type.name}
-                  <span
-                    className={`size-4 rounded-full border-2 ${
-                      selected ? "border-brand bg-brand ring-2 ring-white ring-inset" : "border-line"
-                    }`}
-                  />
-                </span>
-                <span className="mt-1 block text-sm text-muted">{type.blurb}</span>
-              </label>
-            );
-          })}
-        </div>
+      <Section step={3} {...section("focus")} title="Interview focus" hint="What the questions concentrate on.">
+        <ChoiceCards
+          name="focus"
+          label="Interview focus"
+          options={FOCUSES}
+          value={focus}
+          onChange={setFocus}
+          columns={3}
+        />
       </Section>
 
-      <Section step={4} title="Experience range" hint="Years of experience the role asks for.">
+      <Section step={4} {...section("company")} title="Type of company" hint="This sets how deep the questions go and the bar for the verdict.">
+        <ChoiceCards
+          name="company"
+          label="Type of company"
+          options={COMPANY_TYPES}
+          value={company}
+          onChange={setCompany}
+        />
+      </Section>
+
+      <Section step={5} {...section("years")} title="Experience range" hint="Years of experience the role asks for.">
         <div className="flex items-center gap-3">
           <label htmlFor="min-years" className="sr-only">
             Minimum years
@@ -215,7 +286,9 @@ function StartForm() {
           {sending && <Spinner className="size-4" />}
           {sending ? "Submitting…" : "Prepare my interview"}
         </button>
-        <p className="text-sm text-muted">A 45-minute technical round. Preparation takes a few minutes.</p>
+        <p className="text-sm text-muted">
+          A {chosen.minutes}-minute {chosen.name.toLowerCase()} round. Preparation takes a few minutes.
+        </p>
       </div>
     </form>
   );
@@ -224,7 +297,7 @@ function StartForm() {
 export function Start() {
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Start an interview</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">Set up your interview</h1>
       <p className="mt-2 text-muted">
         Tell us about you and the role. We first check that the resume and the
         job description are both for a software engineering role, then prepare

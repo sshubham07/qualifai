@@ -159,6 +159,18 @@ async def test_opening_question_prompt_leads_with_planned_claims_and_carries_exp
     assert "3–5 years" in prompt and "3.5 years" in prompt and "cover: kubernetes" in prompt
 
 
+async def test_a_focused_round_asks_its_own_topics_in_its_own_style():
+    llm = prep_llm()
+    kit = await prepare_kit(llm, request(round_type="r3_hld", target_minutes=60), _noop)
+    hld = round_template(RoundType.R3_HLD)
+    assert {s for t in kit.plan.topics for s in t.skills} == set(hld.skills)
+    assert [g.skill for g in kit.gaps] == ["kubernetes", "postgresql"]  # the JD still gates the fit
+    assert sum(p.seconds for p in kit.plan.phases) == 60 * 60
+    packs = [prompt for task, prompt in llm.calls if task is LLMTask.TOPIC_PACK]
+    assert len(packs) == len(hld.skills)
+    assert all(hld.rules.strip() in p and "R3 High-Level Design" in p for p in packs)
+
+
 class _SlowLLM:
     """Counts how many structured calls are in flight at once."""
 

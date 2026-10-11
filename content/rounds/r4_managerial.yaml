@@ -6,6 +6,8 @@ phases:
   - { name: core, weight: 22 }
   - { name: closing, weight: 5, reserved: true }
 rubric_dimensions: [structure_star, ownership, impact, self_awareness, collaboration]
+skills: { ownership: 3, conflict_resolution: 3, handling_failure: 3, impact_and_prioritisation: 2,
+          collaboration: 2, mentoring: 1 }
 rules: |
   Engineering manager. Ask about real projects, conflict, failures and decisions. Probe for what
   the candidate personally did ("I" vs "we") and measurable outcomes.

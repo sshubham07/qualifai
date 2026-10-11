@@ -1,0 +1,16 @@
+id: dsa
+name: DSA
+default_minutes: 45
+phases:
+  - { name: intro, weight: 3 }
+  - { name: core, weight: 38 }        # problems talked through in text; editor + tests in spec-002
+  - { name: closing, weight: 4, reserved: true }
+rubric_dimensions: [problem_solving, correctness, complexity_analysis, edge_cases]
+needs_editor: false
+needs_sandbox: false
+skills: { arrays_hashing: 3, trees_graphs: 3, complexity_analysis: 3, sorting_searching: 2,
+          dynamic_programming: 2, recursion_backtracking: 1 }
+rules: |
+  Data structures and algorithms interviewer. Pose one problem at a time in your own words, sized
+  to answer in text: approach, pseudocode, time and space complexity, edge cases. Ask for the brute
+  force first, then a better solution. Never reveal answers.

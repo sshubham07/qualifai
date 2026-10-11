@@ -35,6 +35,7 @@ async def build_pack(
     anchors = "\n".join(filter(None, (seed_anchors(s) for s in topic.skills)))
     prompt = load_prompt("topic_pack").format(
         round_name=template.name,
+        round_rules=template.rules.strip(),
         tier_name=tier.name,
         max_depth=topic.max_depth,
         difficulty=topic.start_difficulty,

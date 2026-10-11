@@ -8,7 +8,7 @@ therefore what should the interview do with it?
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from qualifai.domain.enums import EvidenceLevel, ProbeType
 from qualifai.domain.models import GapRow, JDSkill, ResumeClaim
@@ -26,6 +26,12 @@ _PROBE_FACTOR = {ProbeType.VERIFY_CLAIM: 1.2, ProbeType.TEST_GAP: 1.0, ProbeType
 def strongest_claim(skill: str, claims: Sequence[ResumeClaim]) -> ResumeClaim | None:
     relevant = [c for c in claims if skill in c.skills]
     return max(relevant, key=lambda c: _EVIDENCE_RANK[c.evidence_level], default=None)
+
+
+def round_skills(skills: Mapping[str, int]) -> list[JDSkill]:
+    """A focused round asks about its own skills (content/rounds/*.yaml), not the JD's: they go
+    through the same matrix, so a resume claim that shows one is still verified (ADR-0019)."""
+    return [JDSkill(name=name, weight=w, must_have=w >= 3) for name, w in skills.items()]
 
 
 def build_gap_matrix(jd_skills: Sequence[JDSkill], claims: Sequence[ResumeClaim]) -> list[GapRow]:

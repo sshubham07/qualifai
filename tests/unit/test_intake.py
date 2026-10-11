@@ -67,6 +67,29 @@ def test_interview_in_defaults_to_r1_and_normalises_email():
     assert body.to_request().round_type is RoundType.R1_TECHNICAL
 
 
+@pytest.mark.parametrize(
+    ("body", "minutes"),
+    [
+        ({"round_type": "r3_hld"}, 60),
+        ({"round_type": "r4_managerial"}, 30),
+        ({"round_type": "hr"}, 15),
+        ({"round_type": "dsa"}, 45),
+        ({"round_type": "r3_hld", "target_minutes": 45}, 45),
+    ],
+)
+def test_interview_in_takes_its_length_from_the_chosen_focus(body, minutes):
+    req = InterviewIn(
+        resume_text=RESUME,
+        jd_text=JD,
+        company_tier="startup",
+        experience_min_years=3,
+        experience_max_years=5,
+        **body,
+    ).to_request()
+    assert (req.round_type.value, req.target_minutes) == (body["round_type"], minutes)
+    assert input_hash(req) != input_hash(request(company_tier=CompanyTier.STARTUP))
+
+
 def test_interview_in_needs_no_email():
     body = InterviewIn(
         resume_text=RESUME,

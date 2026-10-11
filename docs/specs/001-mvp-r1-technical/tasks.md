@@ -22,6 +22,7 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-16 Intake gate as the first prep step (ADR-0016): resume and JD must both be software roles; FAILED with `failure_code` + reason shown on the status page
 - [x] T-17 Resume–JD match check after extraction (ADR-0018): FAILED with `resume_jd_no_match` and a reason naming the skills only when nothing overlaps; FAILED is terminal
 - [x] T-18 Opening question written in prep (`opening_question` task), stored in the kit and returned by the status endpoint when READY
+- [x] T-19 Interview focus (ADR-0019): the form sends `round_type` (general, DSA, LLD, HLD, managerial); a focused round plans its own `skills`, topic packs get the round rules, length defaults to the round's `default_minutes`
 
 ## API & live loop (Phase 2)
 - [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue; returns `meet_id`)

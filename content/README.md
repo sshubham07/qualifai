@@ -5,7 +5,7 @@ Everything that makes an interview *realistic* lives here as reviewed YAML — n
 
 | Folder | What | Drives |
 |---|---|---|
-| `rounds/` | Round templates (R1 Technical, R2 LLD, R3 HLD, R4 Managerial, HR) | phases, rubric dimensions, rules |
+| `rounds/` | Round templates (R1 Technical, DSA, R2 LLD, R3 HLD, R4 Managerial, HR); the setup page's "interview focus" | phases, rubric dimensions, rules, the round's own topics (`skills`) |
 | `tiers/` | Company tier presets (service, startup, product, MAANG) | difficulty, depth, verdict thresholds |
 | `role_families/` | Which roles are supported and with which skills/rounds | intake gate |
 | `skills/` | `_taxonomy.yaml` (aliases → canonical) + per-skill seed banks | normalisation, rubric anchors |

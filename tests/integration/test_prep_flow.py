@@ -323,6 +323,7 @@ async def test_status_endpoint_follows_prep_and_returns_server_time(sessions):
     assert before["meet_id"] == str(sub.interview_id) and "interview_id" not in before
     assert (before["status"], before["progress"], before["expires_at"]) == ("preparing", [], None)
     assert (before["detected_role"], before["support"]) == (None, None)
+    assert (before["round_type"], before["target_minutes"]) == ("r1_technical", 45)
     assert (before["opening_question"], after["opening_question"]) == (None, OPENING)
     assert failed["opening_question"] is None
     assert after["status"] == "ready" and len(after["progress"]) == 6

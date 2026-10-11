@@ -16,6 +16,9 @@ Required keys (validated by `content/loader.py::RoundTemplate`):
 - `rubric_dimensions`: what topic evaluation scores (3–5 dimensions)
 - `rules`: 2–4 lines of interviewer behaviour for prompts
 - optional `needs_editor`, `needs_sandbox`, `scored`
+- optional `skills` (skill → weight 1..3): the round's own topics, planned instead of the JD's
+  skills (ADR-0019). Weight 3 is always asked. Leave it out for a JD-driven round like R1.
+- to offer the round on the setup page, add a card to `FOCUSES` in `frontend/src/lib/api.ts`
 
 ## Tier preset — `content/tiers/<tier>.yaml`
 `difficulty_offset`, `max_depth`, `challenge_threshold`, `must_have_floor`, `bands`

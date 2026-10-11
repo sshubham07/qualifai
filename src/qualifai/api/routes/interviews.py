@@ -25,7 +25,7 @@ from qualifai.api.schemas import (
 from qualifai.db.models import Interview, InterviewEvent, InterviewKit
 from qualifai.db.session import get_session
 from qualifai.domain.clock import Clock
-from qualifai.domain.enums import InterviewStatus, RoleFamily
+from qualifai.domain.enums import InterviewStatus, RoleFamily, RoundType
 
 router = APIRouter(prefix="/interviews", tags=["interviews"])
 
@@ -62,6 +62,8 @@ async def get_interview(
     return InterviewStatusOut(
         meet_id=interview.id,
         status=status_,
+        round_type=RoundType(interview.round_type),
+        target_minutes=interview.target_minutes,
         detected_role=None
         if interview.role_family == RoleFamily.UNKNOWN
         else interview.role_family,

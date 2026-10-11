@@ -4,7 +4,8 @@ from enum import StrEnum
 
 
 class RoundType(StrEnum):
-    R1_TECHNICAL = "r1_technical"  # project deep-dive + core skills (+ DSA in V2)
+    R1_TECHNICAL = "r1_technical"  # general: project deep-dive + the JD's skills
+    DSA = "dsa"  # talked through in text; editor + sandbox arrive with spec-002
     R2_LLD = "r2_lld"
     R3_HLD = "r3_hld"
     R4_MANAGERIAL = "r4_managerial"

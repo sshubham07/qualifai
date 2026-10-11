@@ -32,6 +32,8 @@ class RoundTemplate(_Strict):
     needs_editor: bool = False
     needs_sandbox: bool = False
     scored: bool = True
+    # The round's own topics (skill -> weight 1..3). Empty: topics come from the JD (ADR-0019).
+    skills: dict[str, int] = {}
     rules: str
 
 

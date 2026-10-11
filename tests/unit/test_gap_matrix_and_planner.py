@@ -3,7 +3,7 @@ import pytest
 from qualifai.content.loader import round_template, tier_preset
 from qualifai.domain.enums import CompanyTier, EvidenceLevel, ProbeType, RoundType, TopicPriority
 from qualifai.domain.models import JDSkill, ResumeClaim
-from qualifai.prep.gap_matrix import build_gap_matrix
+from qualifai.prep.gap_matrix import build_gap_matrix, round_skills
 from qualifai.prep.planner import PlanningConfig, allocate_phases, build_plan, start_difficulty
 
 pytestmark = pytest.mark.unit
@@ -45,6 +45,31 @@ def test_gap_matrix_sorted_by_priority():
     rows = build_gap_matrix(JD, CLAIMS)
     assert rows[0].skill == "kubernetes"
     assert rows[-1].skill == "caching"
+
+
+FOCUSED = [RoundType.DSA, RoundType.R2_LLD, RoundType.R3_HLD, RoundType.R4_MANAGERIAL]
+
+
+@pytest.mark.parametrize("round_type", FOCUSED)
+def test_a_focused_round_plans_its_own_skills(round_type):
+    template = round_template(round_type)
+    rows = build_gap_matrix(round_skills(template.skills), CLAIMS)
+    plan = build_plan(rows, template, tier_preset(CompanyTier.PRODUCT), 45, "core")
+    assert {s for t in plan.topics for s in t.skills} == set(template.skills)
+    musts = {s for t in plan.topics if t.priority is TopicPriority.MUST for s in t.skills}
+    assert {s for s, w in template.skills.items() if w == 3} <= musts  # weight 3 is always asked
+    assert all(1 <= w <= 3 for w in template.skills.values())
+
+
+def test_the_general_round_takes_its_topics_from_the_jd():
+    assert round_template(RoundType.R1_TECHNICAL).skills == {}
+
+
+def test_a_round_skill_the_resume_shows_is_verified_against_the_claim():
+    claim = CLAIMS[0].model_copy(update={"skills": ("system_design",)})
+    rows = {r.skill: r for r in build_gap_matrix(round_skills({"system_design": 3}), [claim])}
+    assert rows["system_design"].probe_type is ProbeType.VERIFY_CLAIM
+    assert rows["system_design"].claim_id == "c1"
 
 
 @pytest.mark.parametrize("round_type", list(RoundType))

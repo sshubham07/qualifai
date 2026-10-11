@@ -9,6 +9,8 @@ phases:
 rubric_dimensions: [entity_modeling, responsibilities, extensibility, code_clarity]
 needs_editor: true
 needs_sandbox: false
+skills: { entity_modeling: 3, class_responsibilities: 3, extensibility: 3, requirements_scoping: 2,
+          design_patterns: 2, concurrency: 1 }
 rules: |
   LLD interviewer. Let the candidate drive requirements, then probe class design and extensibility
   ("add a new vehicle type"). Prefer simple, interview-realistic designs; do not demand patterns

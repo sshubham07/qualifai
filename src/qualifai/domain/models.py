@@ -34,7 +34,7 @@ class InterviewRequest(Frozen):
     company_tier: CompanyTier
     experience_min_years: int = Field(ge=0, le=40)
     experience_max_years: int = Field(ge=0, le=40)
-    target_minutes: int = Field(default=45, ge=20, le=90)
+    target_minutes: int = Field(default=45, ge=15, le=90)
     company_name: str | None = Field(default=None, max_length=200)
 
     @model_validator(mode="after")

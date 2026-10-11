@@ -26,6 +26,45 @@ export const COMPANY_TYPES = [
 
 export type CompanyType = (typeof COMPANY_TYPES)[number]["id"];
 
+// What the interview concentrates on. Ids and lengths mirror content/rounds/*.yaml.
+export const FOCUSES = [
+  {
+    id: "r1_technical",
+    name: "General",
+    minutes: 45,
+    blurb: "Your projects and the skills the job description asks for.",
+  },
+  {
+    id: "dsa",
+    name: "DSA",
+    minutes: 45,
+    blurb: "Data structures and algorithms: approach, complexity and edge cases.",
+  },
+  {
+    id: "r2_lld",
+    name: "Low-level design",
+    minutes: 60,
+    blurb: "Classes, responsibilities and designs that stay easy to extend.",
+  },
+  {
+    id: "r3_hld",
+    name: "High-level design",
+    minutes: 60,
+    blurb: "System design: architecture, data, scaling and failure handling.",
+  },
+  {
+    id: "r4_managerial",
+    name: "Managerial",
+    minutes: 30,
+    blurb: "Ownership, conflict, failures and the decisions you made.",
+  },
+] as const;
+
+export type Focus = (typeof FOCUSES)[number]["id"];
+
+export const focusName = (id: string) =>
+  FOCUSES.find((f) => f.id === id)?.name ?? id.replaceAll("_", " ");
+
 // Limits mirror InterviewRequest in src/qualifai/domain/models.py.
 export const LIMITS = {
   resume: { min: 200, max: 40_000 },
@@ -36,6 +75,7 @@ export const LIMITS = {
 export type InterviewInput = {
   resume_text: string;
   jd_text: string;
+  round_type: Focus;
   company_tier: CompanyType;
   experience_min_years: number;
   experience_max_years: number;
@@ -58,6 +98,8 @@ export type Accepted = {
 };
 
 export type StatusOut = Accepted & {
+  round_type: string; // the interview focus
+  target_minutes: number;
   detected_role: string | null; // known once the resume and job description have been checked
   support: string | null;
   failure_code: string | null;
@@ -93,6 +135,7 @@ export class ApiError extends Error {
 const FIELD_LABELS: Record<string, string> = {
   resume_text: "Resume",
   jd_text: "Job description",
+  round_type: "Interview focus",
   company_tier: "Company type",
   experience_min_years: "Experience",
   experience_max_years: "Experience",

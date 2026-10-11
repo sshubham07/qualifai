@@ -48,7 +48,7 @@ Everything the [README](../README.md) leaves out: design, models, judgement, sto
 | **② Live interview** | Question → answer → Turn Analyzer → **Policy** (time + signals) → next question; ends naturally around the target time | LangGraph loop, fast models, seconds |
 | **③ Evaluation** | Per-topic scores with quotes → evidence check → aggregation → gates → verdict → narrative → HTML report | async worker, large model, minutes |
 
-Inputs: **Resume (text) · JD (text) · Round** (R1 Technical, R2 LLD, R3 HLD, R4 Managerial, HR) **· Company tier · Experience range · Duration** · optional company name.
+Inputs: **Resume (text) · JD (text) · Round**, shown as the interview focus (R1 Technical = general, DSA, R2 LLD, R3 HLD, R4 Managerial; HR is API-only) **· Company tier · Experience range · Duration** · optional company name.
 
 > **Not a RAG app.** Resume and JD fit in context. Retrieval appears only as a supporting component
 > in V2 (real-question corpus via pgvector). It's best described as an *LLM-orchestrated stateful

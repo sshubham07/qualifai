@@ -1,7 +1,9 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CheckIcon, Spinner } from "../components/icons";
-import { ApiError, type StatusOut, getInterview, roleName } from "../lib/api";
+import type { Mood } from "../components/Robot";
+import { ApiError, type StatusOut, focusName, getInterview, roleName } from "../lib/api";
+import { useGuide } from "../lib/guide";
 
 const POLL_MS = 3000;
 const PREP_STEPS = [
@@ -185,6 +187,30 @@ function MeetId({ id }: { id: string }) {
   );
 }
 
+function guideLine(data: StatusOut | null, problem: Error | null): [string | null, Mood] {
+  if (!data) {
+    const lost = problem instanceof ApiError && (problem.status === 404 || problem.status === 422);
+    return lost ? ["I don't know this Meet ID. Check the link, or start a new interview.", "think"] : [null, "think"];
+  }
+  switch (data.status) {
+    case "submitted":
+    case "preparing":
+      return [
+        "I'm reading your resume and the job description. It takes a few minutes; you can close this page and come back with the Meet ID.",
+        "think",
+      ];
+    case "failed":
+      return ["I couldn't build this one. The reason is on the page; start again once you've changed it.", "think"];
+    case "expired":
+      return ["This one ran out of time. Start a new interview and I'll prepare it again.", "think"];
+    default:
+      return [
+        `All set! Start when you have about ${data.target_minutes} quiet minutes. You get one attempt.`,
+        "happy",
+      ];
+  }
+}
+
 function PrepStatus({ id }: { id: string }) {
   const [data, setData] = useState<StatusOut | null>(null);
   const [problem, setProblem] = useState<ApiError | Error | null>(null);
@@ -216,6 +242,8 @@ function PrepStatus({ id }: { id: string }) {
       clearTimeout(timer);
     };
   }, [id]);
+
+  useGuide(...guideLine(data, problem));
 
   if (!data) {
     if (problem instanceof ApiError && (problem.status === 404 || problem.status === 422)) {
@@ -288,7 +316,7 @@ function PrepStatus({ id }: { id: string }) {
                 month: "long",
               })}
             </strong>
-            . One attempt, about 45 minutes.
+            . One attempt, about {data.target_minutes} minutes.
           </p>
         )}
 
@@ -296,6 +324,10 @@ function PrepStatus({ id }: { id: string }) {
 
         <PrepSteps started={data.progress} preparing={preparing} />
       </Card>
+
+      <p className="px-1 text-sm text-muted">
+        Focus: <span className="font-medium text-ink">{focusName(data.round_type)}</span>
+      </p>
 
       {data.detected_role && (
         <p className="px-1 text-sm text-muted">

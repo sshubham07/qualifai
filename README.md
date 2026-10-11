@@ -25,7 +25,8 @@
 | | |
 |---|---|
 | 🧠 **Code decides, LLM talks** | Next question, timing and verdict are plain Python. The LLM only reads and phrases. |
-| ⏱️ **Real clock** | A server-owned ~45-minute window with per-topic budgets. |
+| ⏱️ **Real clock** | A server-owned time window (30–60 minutes, by focus) with per-topic budgets. |
+| 🧭 **Pick a focus** | General · DSA · low-level design · high-level design · managerial. Each is a round template in YAML. |
 | 🎯 **About you** | Cross-questions *your* resume claims against what the *JD* needs. |
 | 🔍 **Evidence or no score** | Every score cites a quote that is checked against the transcript. |
 | 🏢 **Company-aware** | Service · startup · product · MAANG bars. |
