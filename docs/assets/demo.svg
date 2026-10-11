@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400" role="img" aria-label="Demo: the interviewer asks about a Kubernetes claim, a vague answer triggers a probing follow-up, the claim turns out inflated, and the report cites the candidate's own words">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#4263eb"/><stop offset="0.5" stop-color="#0ca678"/><stop offset="1" stop-color="#f08c00"/>
+    </linearGradient>
+    <style>
+      text{font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+      .ttl{font-weight:600;font-size:13px;fill:#8b949e}
+      .clk{font-weight:700;font-size:13px;fill:#e6edf3}
+      .q{font-weight:500;font-size:13px;fill:#fff}
+      .who{font-weight:700;font-size:10px;fill:#8b949e;letter-spacing:.08em}
+      .chip{font-weight:700;font-size:11px;fill:#fff}
+      .arr{font-weight:700;font-size:14px;fill:#8b949e}
+      .rh{font-weight:700;font-size:12px;fill:#8b949e;letter-spacing:.1em}
+      .big{font-weight:800;font-size:46px;fill:#e6edf3}
+      .of{font-weight:600;font-size:14px;fill:#8b949e}
+      .sk{font-weight:600;font-size:12px;fill:#c9d1d9}
+      .ev{font-weight:500;font-size:12px;fill:#e6edf3;font-style:italic}
+      .s{opacity:0;animation-duration:20s;animation-iteration-count:infinite;animation-timing-function:ease-out}
+      .s1{animation-name:k1}.s2{animation-name:k2}.s3{animation-name:k3}.s4{animation-name:k4}
+      .s5{animation-name:k5}.s6{animation-name:k6}.s7{animation-name:k7}.s8{animation-name:k8}
+      @keyframes k1{0%,2%{opacity:0;transform:translateY(8px)}5%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k2{0%,11%{opacity:0;transform:translateY(8px)}14%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k3{0%,20%{opacity:0;transform:translateY(8px)}23%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k4{0%,29%{opacity:0;transform:translateY(8px)}32%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k5{0%,38%{opacity:0;transform:translateY(8px)}41%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k6{0%,47%{opacity:0;transform:translateY(8px)}50%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k7{0%,56%{opacity:0;transform:translateY(8px)}59%,95%{opacity:1;transform:none}100%{opacity:0}}
+      @keyframes k8{0%,66%{opacity:0;transform:translateY(8px)}70%,95%{opacity:1;transform:none}100%{opacity:0}}
+      .time{transform-origin:0 0;animation:t 20s linear infinite}
+      @keyframes t{0%{transform:scaleX(.55)}95%{transform:scaleX(.78)}100%{transform:scaleX(.55)}}
+      .dot{animation:b 1.2s ease-in-out infinite}
+      @keyframes b{50%{opacity:.25}}
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="898" height="398" rx="14" fill="#0d1117" stroke="#30363d" stroke-width="2"/>
+  <circle cx="24" cy="24" r="5" fill="#ff5f57"/><circle cx="42" cy="24" r="5" fill="#febc2e"/><circle cx="60" cy="24" r="5" fill="#28c840"/>
+  <text x="84" y="28" class="ttl">QualifAI · R1 Technical · MAANG tier</text>
+  <circle cx="752" cy="24" r="4" fill="#fa5252" class="dot"/>
+  <text x="764" y="28" class="clk">32:10 / ~45 min</text>
+  <rect x="0" y="46" width="900" height="4" fill="url(#g)" class="time"/>
+  <line x1="600" y1="50" x2="600" y2="398" stroke="#30363d" stroke-width="2"/>
+
+  <!-- interview -->
+  <g class="s s1"><rect x="24" y="72" width="420" height="36" rx="12" fill="#1c7ed6"/>
+    <text x="40" y="95" class="q">You ran microservices on Kubernetes — walk me through it.</text></g>
+  <g class="s s2"><rect x="296" y="118" width="280" height="36" rx="12" fill="#343a40"/>
+    <text x="312" y="141" class="q">We used K8s to scale all our services.</text></g>
+  <g class="s s3"><rect x="24" y="166" width="196" height="24" rx="12" fill="#7048e8"/>
+    <text x="122" y="182" class="chip" text-anchor="middle">LLM signal · specificity low</text>
+    <text x="234" y="183" class="arr" text-anchor="middle">→</text>
+    <rect x="248" y="166" width="206" height="24" rx="12" fill="#2f9e44"/>
+    <text x="351" y="182" class="chip" text-anchor="middle">Policy · PROBE_SPECIFICITY</text></g>
+  <g class="s s4"><rect x="24" y="202" width="306" height="36" rx="12" fill="#1c7ed6"/>
+    <text x="40" y="225" class="q">What exactly did you configure yourself?</text></g>
+  <g class="s s5"><rect x="280" y="248" width="296" height="36" rx="12" fill="#343a40"/>
+    <text x="296" y="271" class="q">Honestly, the platform team owned that.</text></g>
+  <g class="s s6"><rect x="24" y="296" width="196" height="24" rx="12" fill="#7048e8"/>
+    <text x="122" y="312" class="chip" text-anchor="middle">LLM signal · claim inflated</text>
+    <text x="234" y="313" class="arr" text-anchor="middle">→</text>
+    <rect x="248" y="296" width="206" height="24" rx="12" fill="#2f9e44"/>
+    <text x="351" y="312" class="chip" text-anchor="middle">Policy · CHALLENGE_CLAIM</text></g>
+  <g class="s s7"><rect x="24" y="332" width="296" height="36" rx="12" fill="#1c7ed6"/>
+    <text x="40" y="355" class="q">So which part of the design was yours?</text></g>
+
+  <!-- report -->
+  <g class="s s8">
+    <text x="624" y="84" class="rh">REPORT</text>
+    <text x="624" y="138" class="big">6.6</text><text x="702" y="138" class="of">/ 10</text>
+    <rect x="772" y="112" width="104" height="28" rx="14" fill="#f08c00"/>
+    <text x="824" y="131" class="chip" text-anchor="middle" style="font-size:13px">Lean Hire</text>
+
+    <text x="624" y="178" class="sk">PostgreSQL</text>
+    <rect x="716" y="168" width="160" height="10" rx="5" fill="#21262d"/><rect x="716" y="168" width="128" height="10" rx="5" fill="#2f9e44"/>
+    <text x="624" y="204" class="sk">FastAPI</text>
+    <rect x="716" y="194" width="160" height="10" rx="5" fill="#21262d"/><rect x="716" y="194" width="120" height="10" rx="5" fill="#2f9e44"/>
+    <text x="624" y="230" class="sk">Kubernetes</text>
+    <rect x="716" y="220" width="160" height="10" rx="5" fill="#21262d"/><rect x="716" y="220" width="64" height="10" rx="5" fill="#fa5252"/>
+
+    <text x="624" y="278" class="rh">EVIDENCE</text>
+    <rect x="624" y="290" width="4" height="46" rx="2" fill="#fa5252"/>
+    <text x="640" y="308" class="ev">“the platform team owned that”</text>
+    <text x="640" y="328" class="who">CLAIM GATE → MAX LEAN HIRE</text>
+    <text x="624" y="368" class="who">VERDICT COMPUTED BY CODE</text>
+  </g>
+</svg>

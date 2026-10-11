@@ -30,12 +30,14 @@ src/qualifai/
   content/     YAML loaders        db/  SQLAlchemy + repos        api/  FastAPI (thin)
   workers/     arq jobs (prep, evaluate, hard stop, expiry)       coding/  V2 sandbox
 content/       rounds, tiers, role families, skills, problems, models.yaml
+frontend/      React + Vite single-page app (TypeScript, Tailwind); built files served by the API
 .claude/       architecture (overview, HLD, ADRs), specs (spec → plan → tasks), skills, hooks
 tests/         unit · architecture · contract · integration · e2e · evals · security · load
 ```
 
 ## Commands
-`make install` · `make up` · `make api` · `make worker` · `make test` · `make check` · `make evals`
+`make install` · `make up` · `make api` · `make worker` · `make web` · `make web-build` ·
+`make test` · `make check` · `make evals`
 
 ## How to work here (spec-driven)
 1. Find the task in `docs/specs/<NNN>/tasks.md` (IDs like `T-12`; code TODOs reference them).
@@ -44,6 +46,9 @@ tests/         unit · architecture · contract · integration · e2e · evals �
 4. `make check` must pass. Tick the task. If you made an architectural decision, add an ADR
    (skill: `write-adr`).
 5. Commit directly on `main` — single-maintainer repo, do not create feature branches.
+6. **Update `README.md` before every commit** (a hook blocks the commit otherwise). Keep it
+   eye-catching, animated (SVGs in `docs/assets/`) and short — a visitor should get it in under a
+   minute. Detail goes in `docs/deep-dive.md`.
 
 ## Style
 Python 3.12, type hints everywhere (mypy strict), Pydantic v2 models frozen by default,
