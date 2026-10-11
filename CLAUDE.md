@@ -43,6 +43,7 @@ tests/         unit · architecture · contract · integration · e2e · evals �
 3. Write/extend tests at the right level (see `tests/README.md`), then implement.
 4. `make check` must pass. Tick the task. If you made an architectural decision, add an ADR
    (skill: `write-adr`).
+5. Commit directly on `main` — single-maintainer repo, do not create feature branches.
 
 ## Style
 Python 3.12, type hints everywhere (mypy strict), Pydantic v2 models frozen by default,
