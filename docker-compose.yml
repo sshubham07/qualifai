@@ -46,7 +46,7 @@ services:
       retries: 10
 
   minio:                                   # S3-compatible object storage for resume PDFs / reports
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest  # minio/minio is no longer published on Docker Hub
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minio
