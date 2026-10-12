@@ -34,6 +34,7 @@
 | 🚦 **Software roles only** | A small local model checks the resume and the JD first. If either isn't software, it stops and says why. |
 | 🧩 **Resume must fit the JD** | Code compares what the JD asks for with what your resume shows. If they are totally off, it stops and names the skills. |
 | 🔗 **No sign-up** | Paste and go. You get a Meet ID to check whether your interview is preparing or ready. |
+| 🆕 **Fresh every time** | Every submission is its own interview with its own prep, even for the same resume and JD. |
 
 <details>
 <summary><b>🔁 Watch one turn</b></summary>

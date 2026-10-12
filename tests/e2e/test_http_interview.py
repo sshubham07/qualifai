@@ -78,7 +78,7 @@ class Stack:
     async def ready_interview(self, email: str | None = None) -> tuple[str, str | None]:
         """POST the interview, then run the prep job the way the worker would."""
         body = {
-            "resume_text": f"{RESUME} {uuid4().hex}",  # unique: no reuse across tests
+            "resume_text": RESUME,
             "jd_text": JD,
             "company_tier": "product",
             "experience_min_years": 3,

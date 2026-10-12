@@ -52,7 +52,7 @@ class Harness:
 
     async def submit(self, **kw):
         async with self.sessions() as s:
-            return await submit_interview(s, self._enqueue, self.clock, request(**kw), self.email)
+            return await submit_interview(s, self._enqueue, request(**kw), self.email)
 
     async def prepare(self, interview_id) -> None:
         deps = PrepDeps(self.llm, self.clock, self._send, "http://app", kit_ttl_days=7)
@@ -77,15 +77,16 @@ async def test_submit_persists_the_four_inputs_and_enqueues_prep(sessions):
     assert row.resume_text == RESUME
 
 
-async def test_resubmitting_the_same_inputs_reuses_the_interview(sessions):
+async def test_every_submission_is_a_new_interview_even_with_the_same_inputs(sessions):
     h = Harness(sessions)
     first = await h.submit()
+    await h.prepare(first.interview_id)  # READY and unexpired: still not handed out again
     again = await h.submit()
-    other = await h.submit(company_tier="maang")
 
-    assert again.interview_id == first.interview_id and again.reused
-    assert other.interview_id != first.interview_id
-    assert h.enqueued == [first.interview_id, other.interview_id]
+    assert again.interview_id != first.interview_id
+    assert again.status is InterviewStatus.PREPARING
+    assert h.enqueued == [first.interview_id, again.interview_id]  # prepared from scratch
+    assert (await h.interview(first.interview_id)).status == "ready"  # the first is untouched
 
 
 async def test_injection_marker_in_resume_is_flagged_not_obeyed(sessions):
@@ -157,16 +158,15 @@ async def test_prepare_job_stores_kit_marks_ready_and_emails_link(sessions):
     assert expires_on == (T0 + timedelta(days=7)).date().isoformat()
 
 
-async def test_submission_without_email_has_no_user_and_is_reused(sessions):
+async def test_submission_without_email_has_no_user_and_is_never_shared(sessions):
     h = Harness(sessions, anonymous=True)
-    resume = f"{RESUME} {uuid4().hex}"  # no user to scope the reuse, so make the inputs unique
-    first = await h.submit(resume_text=resume)
-    again = await h.submit(resume_text=resume)
+    first = await h.submit()
+    again = await h.submit()  # someone else pasting the very same documents
 
     row = await h.interview(first.interview_id)
     assert (row.status, row.user_id) == ("preparing", None)
-    assert again.interview_id == first.interview_id and again.reused
-    assert h.enqueued == [first.interview_id]
+    assert again.interview_id != first.interview_id
+    assert h.enqueued == [first.interview_id, again.interview_id]
 
 
 async def test_prepare_without_email_marks_ready_and_sends_nothing(sessions):
@@ -271,14 +271,6 @@ async def test_a_partial_fit_goes_ahead_to_a_ready_interview(sessions):
         kit = await s.get_one(InterviewKit, sub.interview_id)
     assert kit.profile["match"]["matched"] == ["docker"] and kit.profile["match"]["score"] == 0.2
     assert kit.profile["opening_question"] == OPENING
-
-
-async def test_a_failed_interview_is_not_reused_on_resubmission(sessions):
-    h = Harness(sessions, prep_llm(jd_role_family="non_technical"))
-    first = await h.submit()
-    await h.prepare(first.interview_id)
-    again = await h.submit()
-    assert again.interview_id != first.interview_id and not again.reused
 
 
 async def test_status_endpoint_follows_prep_and_returns_server_time(sessions):

@@ -25,7 +25,7 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-19 Interview focus (ADR-0019): the form sends `round_type` (general, DSA, LLD, HLD, managerial); a focused round plans its own `skills`, topic packs get the round rules, length defaults to the round's `default_minutes`
 
 ## API & live loop (Phase 2)
-- [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue; returns `meet_id`)
+- [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; always a new interview, enqueue; returns `meet_id`)
 - [x] T-21 `GET /v1/interviews/{id}` with `server_now`
 - [x] T-22 `POST /start` (owner token if the interview was emailed, READY + not expired, window, hard stop scheduled at hard_end + 60 s, first question = the kit's opening question; the status endpoint no longer returns it)
 - [x] T-23 `POST /answers` (integrity events: pastes, time to first keystroke, idle time; graph resumed; latency credit stored; eval enqueued on end)

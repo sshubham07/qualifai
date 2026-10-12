@@ -1,6 +1,6 @@
 # Plan 001
 
-Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020.
+Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020, 0021.
 
 ## Modules
 | Area | Module | Kind |
@@ -21,7 +21,7 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 
 | Jobs | `workers/jobs/*` | arq |
 
 ## Key flows
-1. `POST /v1/interviews` (JSON: resume text, JD text, tier, experience range) → dedupe by input hash →
+1. `POST /v1/interviews` (JSON: resume text, JD text, tier, experience range) → always a new interview (ADR-0021) →
    SUBMITTED→PREPARING → enqueue `prepare_interview_job`.
 2. Worker: intake gate (`run_intake` → `decide`; a rejection is FAILED with a reason, ADR-0016) →
    `prepare_kit`: extraction → gap matrix → match check (a mismatch is FAILED with a reason,

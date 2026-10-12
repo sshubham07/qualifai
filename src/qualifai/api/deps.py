@@ -27,7 +27,7 @@ async def get_submit(request: Request, session: AsyncSession = Depends(get_sessi
             "prepare_interview_job", str(interview_id), _job_id=f"prepare:{interview_id}"
         )
 
-    return partial(submit_interview, session, enqueue, SystemClock())
+    return partial(submit_interview, session, enqueue)
 
 
 def get_live(request: Request) -> LiveRuntime:

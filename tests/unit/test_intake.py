@@ -10,13 +10,11 @@ from fastapi.testclient import TestClient
 from openai import BadRequestError
 from pydantic import ValidationError
 from tenacity import wait_none
-from tests.conftest import T0
 from tests.prep_fakes import JD, RESUME, intake, request
 
 from qualifai.api.deps import get_submit
 from qualifai.api.main import create_app
 from qualifai.api.schemas import InterviewIn
-from qualifai.domain.clock import FrozenClock
 from qualifai.domain.enums import CompanyTier, FailureCode, RoundType, SupportLevel
 from qualifai.domain.errors import LLMOutputError
 from qualifai.domain.failures import FAILURE_REASONS
@@ -26,7 +24,7 @@ from qualifai.llm.gateway import LLMGateway
 from qualifai.llm.router import ModelRoute, ModelRouter
 from qualifai.llm.tasks import LLMTask
 from qualifai.prep.intake_gate import decide
-from qualifai.prep.submission import input_hash, submit_interview
+from qualifai.prep.submission import submit_interview
 
 pytestmark = pytest.mark.unit
 NO_FRONTEND = Path("/nonexistent")
@@ -43,14 +41,6 @@ def test_experience_range_must_be_ordered(lo, hi, ok):
     else:
         with pytest.raises(ValidationError):
             request(experience_min_years=lo, experience_max_years=hi)
-
-
-def test_input_hash_is_stable_and_sensitive_to_every_input():
-    base = input_hash(request())
-    assert input_hash(request()) == base
-    assert input_hash(request(company_tier=CompanyTier.MAANG)) != base
-    assert input_hash(request(experience_max_years=6)) != base
-    assert input_hash(request(resume_text=RESUME + " ")) != base
 
 
 def test_interview_in_defaults_to_r1_and_normalises_email():
@@ -87,7 +77,6 @@ def test_interview_in_takes_its_length_from_the_chosen_focus(body, minutes):
         **body,
     ).to_request()
     assert (req.round_type.value, req.target_minutes) == (body["round_type"], minutes)
-    assert input_hash(req) != input_hash(request(company_tier=CompanyTier.STARTUP))
 
 
 def test_interview_in_needs_no_email():
@@ -140,7 +129,7 @@ def client(enqueued: list) -> TestClient:
 
     app = create_app(NO_FRONTEND)
     app.dependency_overrides[get_submit] = lambda: partial(
-        submit_interview, UntouchableSession(), enqueue, FrozenClock(T0)
+        submit_interview, UntouchableSession(), enqueue
     )
     return TestClient(app)  # no `with`: lifespan (Redis pool) is not started
 

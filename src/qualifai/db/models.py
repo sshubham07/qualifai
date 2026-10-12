@@ -50,7 +50,6 @@ class Interview(Base, Timestamped):
     role_family: Mapped[str] = mapped_column(String(32))
     support_level: Mapped[str | None] = mapped_column(String(16))  # set by the intake gate
     target_minutes: Mapped[int] = mapped_column(Integer)
-    input_hash: Mapped[str] = mapped_column(String(64), index=True)  # reuse kits for same inputs
     resume_text: Mapped[str | None] = mapped_column(Text)  # nulled after completion / expiry
     jd_text: Mapped[str] = mapped_column(Text)
     experience_min_years: Mapped[int] = mapped_column(Integer)
