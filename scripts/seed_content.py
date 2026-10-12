@@ -3,7 +3,13 @@
 Run: python scripts/seed_content.py
 """
 
-from qualifai.content.loader import role_family, round_template, skill_aliases, tier_preset
+from qualifai.content.loader import (
+    interviewer,
+    role_family,
+    round_template,
+    skill_aliases,
+    tier_preset,
+)
 from qualifai.domain.enums import CompanyTier, RoleFamily, RoundType
 
 if __name__ == "__main__":
@@ -15,4 +21,5 @@ if __name__ == "__main__":
         spec = role_family(f)
         if spec:
             print("role   ", f.value, "→", spec.support.value)
+    print("greeting", "→", interviewer().greet(45))
     print("skills ", len(set(skill_aliases().values())), "canonical skills")

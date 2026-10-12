@@ -64,6 +64,11 @@ services:
     volumes: [ollama:/root/.ollama]
     profiles: ["llm"]
 
+  kokoro:                                  # the interviewer's voice: Kokoro-82M behind an
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest   # OpenAI-compatible /v1/audio/speech (ADR-0024)
+    ports: ["8880:8880"]
+    profiles: ["voice"]
+
   # V2 — coding round sandbox. Needs a Linux host (cgroups). Never co-locate with the DB in prod.
   # judge0:
   #   image: judge0/judge0:latest

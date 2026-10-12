@@ -20,7 +20,12 @@ from qualifai.domain.models import (
 )
 from qualifai.llm.gateway import LLM
 from qualifai.prep.extraction import extract_jd, extract_resume
-from qualifai.prep.gap_matrix import build_gap_matrix, round_skills
+from qualifai.prep.gap_matrix import (
+    build_gap_matrix,
+    round_skills,
+    with_fundamentals,
+    with_round_extras,
+)
 from qualifai.prep.match import assess_match, decide_match, match_reason
 from qualifai.prep.opening import write_opening_question
 from qualifai.prep.planner import PlanningConfig, build_plan
@@ -54,9 +59,14 @@ async def prepare_kit(llm: LLM, req: InterviewRequest, progress: Progress) -> Pr
     await progress("Finding what to verify and what to test")
     gaps = build_gap_matrix(jd.skills, resume.claims)
     # A focused round (DSA, LLD, HLD, managerial) brings its own topics; the JD still has to fit.
-    asked = build_gap_matrix(round_skills(template.skills), resume.claims) or gaps
+    asked = build_gap_matrix(round_skills(template.skills), resume.claims) or (
+        build_gap_matrix(with_round_extras(jd.skills, template.always), resume.claims)
+        if gaps
+        else []
+    )
     if not asked:
         raise PrepRejected(FailureCode.NO_KNOWN_SKILLS)
+    asked = with_fundamentals(asked)  # not only project talk (ADR-0023)
     # Stop here, before the expensive question writing, if the resume and the JD are totally off.
     every_jd_skill = build_gap_matrix([*jd.skills, *jd.other_skills], resume.claims)
     match = assess_match(every_jd_skill, req.resume_text, skill_aliases())

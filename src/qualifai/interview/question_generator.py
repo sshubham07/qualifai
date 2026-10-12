@@ -25,10 +25,15 @@ ACTION_GUIDANCE: dict[PolicyAction, str] = {
     "opening question.",
     PolicyAction.CLOSE_TOPIC_TIME: "Say you'd like to move on for time, then open the next topic.",
     PolicyAction.WRAP_UP: "Thank the candidate and invite one question from them about the role.",
+    PolicyAction.ANSWER_CANDIDATE: "Do NOT ask a question. The candidate was invited to ask about "
+    "the role and has replied. Answer what they asked in 2-4 sentences, using only facts from the "
+    "job description in the context. For anything it does not say (team size, salary, hiring "
+    "process, next steps), say plainly that you don't have that detail and the recruiter will "
+    "confirm it. If they asked nothing, acknowledge that in one short sentence.",
 }
 
 FIXED_TEMPLATES: dict[PolicyAction, str] = {
-    PolicyAction.END: "We're out of time — thank you for your answers. "
+    PolicyAction.END: "That brings us to the end of the interview. Thank you for your answers. "
     "Your detailed report will be ready shortly.",
 }
 

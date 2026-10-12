@@ -11,6 +11,7 @@ Everything that makes an interview *realistic* lives here as reviewed YAML — n
 | `skills/` | `_taxonomy.yaml` (aliases → canonical) + per-skill seed banks | normalisation, rubric anchors |
 | `coding_problems/` | Curated problems with hidden + performance tests (V2) | coding round |
 | `real_questions/` | User-contributed, paraphrased real questions tagged round × tier × skill (V2) | topic-pack realism |
+| `interviewer.yaml` | The interviewer's name and the greeting said before the first question | start of every interview |
 | `models.yaml` | LLM task → provider/model routing | every LLM call |
 
 Rules: write content in your own words; never copy LeetCode/Glassdoor text or tests.

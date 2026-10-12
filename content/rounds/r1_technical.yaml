@@ -5,6 +5,7 @@ phases:
   - { name: intro, weight: 3 }
   - { name: core, weight: 39 }        # resume deep-dive + JD skills (topics come from the JD)
   - { name: closing, weight: 3, reserved: true }
+always: { problem_solving: 2 }      # one DSA-style problem talked through, whatever the JD lists
 rubric_dimensions: [correctness, depth, trade_offs, specificity_ownership]
 needs_editor: false
 needs_sandbox: false

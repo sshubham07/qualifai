@@ -6,6 +6,7 @@ POST /v1/interviews/{id}/start    READY → IN_PROGRESS, returns first question
 POST /v1/interviews/{id}/answers  submit answer, returns next question
 PUT  /v1/interviews/{id}/draft    autosave the answer being typed
 GET  /v1/interviews/{id}/room     pending question + draft, for a reloaded page
+GET  /v1/interviews/{id}/turns/{seq}/audio   the interviewer's turn, spoken (streamed audio)
 GET  /v1/interviews/{id}/events   SSE: the next question token by token, then `ended`
 GET  /v1/interviews/{id}/report   report JSON (HTML via ?format=html)
 """
@@ -16,6 +17,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
@@ -122,6 +124,21 @@ async def rejoin_room(
     interview_id: UUID, deps: room.RoomDeps = Depends(get_room)
 ) -> NextQuestionOut:
     return _next(await room.rejoin(deps, interview_id), deps.clock)
+
+
+@router.get("/{interview_id}/turns/{seq}/audio")
+async def question_audio(
+    interview_id: UUID, seq: int, deps: room.RoomDeps = Depends(get_room)
+) -> StreamingResponse:
+    """Streamed, so the question starts playing while the rest is still being spoken. 503 when
+    the speech model is not available: the page then uses the browser's voice."""
+    speech = await room.question_audio(deps, interview_id, seq)
+    # A turn never changes, so "hear it again" is served from the browser's cache.
+    return StreamingResponse(
+        speech.chunks,
+        media_type=speech.media_type,
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
 
 
 async def sse_frames(events: AsyncIterator[dict[str, Any]]) -> AsyncIterator[dict[str, str]]:

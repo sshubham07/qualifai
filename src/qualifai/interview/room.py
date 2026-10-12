@@ -19,7 +19,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from qualifai.content.loader import round_template, tier_preset
+from qualifai.content.loader import interviewer, round_template, tier_preset
 from qualifai.db.models import Interview, InterviewKit, TurnRow
 from qualifai.domain.clock import Clock
 from qualifai.domain.enums import CompanyTier, InterviewStatus, RoundType
@@ -33,9 +33,12 @@ from qualifai.interview.service import InterviewService, TurnResult
 from qualifai.interview.time_window import TimeWindow
 from qualifai.interview.turn_analyzer import TurnAnalyzer
 from qualifai.llm.gateway import LLM
+from qualifai.llm.speech import Speech
+from qualifai.llm.tasks import LLMTask
 
 log = structlog.get_logger(__name__)
 BRIEF_CLAIMS = 5
+ROLE_BRIEF_CHARS = 2000  # bounded: the live model never gets a whole document
 
 
 class Drafts(Protocol):
@@ -66,6 +69,8 @@ class RoomTurn(Frozen):
     phase: str | None = None
     final_question: bool = False
     draft: str | None = None  # only when rejoining
+    farewell: str | None = None  # the interviewer's last words, once it is over
+    farewell_seq: int | None = None
     started_at: datetime
     target_end_at: datetime  # moves with the latency credit; the page shows elapsed / ~target
 
@@ -126,12 +131,24 @@ def _graph_deps(deps: RoomDeps, interview: Interview, kit: InterviewKit) -> Grap
         round_name=template.name,
         tier_name=tier_preset(CompanyTier(interview.company_tier)).name,
         claims={c["id"]: c["text"] for c in kit.profile.get("claims", [])},
+        role_brief=interview.jd_text[:ROLE_BRIEF_CHARS],
     )
 
 
-def _turn(interview: Interview, result: TurnResult, draft: str | None = None) -> RoomTurn:
+def _last_words(last: TurnRow | None) -> dict[str, Any]:
+    said = last is not None and last.role == "interviewer"
+    return {"farewell": last.text, "farewell_seq": last.seq} if said and last else {}
+
+
+def _turn(
+    interview: Interview,
+    result: TurnResult,
+    draft: str | None = None,
+    last: TurnRow | None = None,
+) -> RoomTurn:
     assert interview.started_at
     return RoomTurn(
+        **_last_words(last),
         question=result.question,
         seq=result.seq,
         ended=result.ended,
@@ -159,7 +176,8 @@ async def _settle(deps: RoomDeps, interview: Interview, result: TurnResult) -> R
             await deps.enqueue_evaluation(interview.id)
         except Exception:
             log.exception("room.enqueue_evaluation_failed", interview_id=str(interview.id))
-    return _turn(interview, result)
+    last = await _last_turn(deps.session, interview.id) if result.ended else None
+    return _turn(interview, result, last=last)
 
 
 def _check_owner(interview: Interview, token: str | None) -> None:
@@ -170,6 +188,12 @@ def _check_owner(interview: Interview, token: str | None) -> None:
         raise NotInterviewOwner(
             "This interview was sent to an email address: open it from that link"
         )
+
+
+def _first_words(minutes: int, opening: str | None) -> str | None:
+    """The interviewer introduces himself and asks for an introduction, then asks the opening
+    question written in prep. Fixed text from `content/interviewer.yaml`, no model call."""
+    return f"{interviewer().greet(minutes)} {opening}" if opening else None
 
 
 async def start_interview(deps: RoomDeps, interview_id: UUID, token: str | None = None) -> RoomTurn:
@@ -193,7 +217,9 @@ async def start_interview(deps: RoomDeps, interview_id: UUID, token: str | None 
         interview.round_type,
         interview.company_tier,
         _graph_deps(deps, interview, kit),
-        opening_question=kit.profile.get("opening_question"),
+        opening_question=_first_words(
+            interview.target_minutes, kit.profile.get("opening_question")
+        ),
     )
     interview.status = status.value
     interview.started_at = window.started_at
@@ -304,6 +330,7 @@ async def rejoin(deps: RoomDeps, interview_id: UUID) -> RoomTurn:
     pending = last if live and last and last.role == "interviewer" else None
     draft = await deps.drafts.load(interview_id) if pending else None
     return RoomTurn(
+        **({} if live else _last_words(last)),
         question=pending.text if pending else None,
         seq=pending.seq if pending else None,
         ended=not live,
@@ -312,3 +339,18 @@ async def rejoin(deps: RoomDeps, interview_id: UUID) -> RoomTurn:
         started_at=interview.started_at,
         target_end_at=_window(interview).target_end_at,
     )
+
+
+async def question_audio(deps: RoomDeps, interview_id: UUID, seq: int) -> Speech:
+    """What the interviewer said at `seq`, as audio (ADR-0024). Only text we wrote ourselves is
+    ever voiced: the page names a turn, it does not send words."""
+    text = await deps.session.scalar(
+        select(TurnRow.text).where(
+            TurnRow.interview_id == interview_id,
+            TurnRow.seq == seq,
+            TurnRow.role == "interviewer",
+        )
+    )
+    if text is None:
+        raise InterviewNotFound(f"{interview_id} has no interviewer turn {seq}")
+    return await deps.llm.speak(LLMTask.SPEECH, text)

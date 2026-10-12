@@ -24,6 +24,8 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-18 Opening question written in prep (`opening_question` task), stored in the kit and returned by the status endpoint when READY
 - [x] T-19 Interview focus (ADR-0019): the form sends `round_type` (general, DSA, LLD, HLD, managerial); a focused round plans its own `skills`, topic packs get the round rules, length defaults to the round's `default_minutes`
 
+- [x] T-36 Fundamentals topics (ADR-0023): each skill whose claim is verified also gets a topic about the skill itself; taxonomy gains nosql, cloud, ci_cd, testing; the closing line no longer says "out of time"
+
 ## API & live loop (Phase 2)
 - [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; always a new interview, enqueue; returns `meet_id`)
 - [x] T-21 `GET /v1/interviews/{id}` with `server_now`
@@ -35,6 +37,10 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 - [x] T-27 E2E test: full interview over HTTP with FakeLLM, FrozenClock, Postgres and Redis
 - [x] T-28 Draft autosave (`PUT /draft` → Redis, cleared on submit) and `GET /room` for a reloaded page
 - [x] T-29 Interview room in the web app (streamed question, autosave, integrity signals, elapsed / ~target)
+- [x] T-34 Voice in the interview room (ADR-0022): the question is read aloud, the microphone opens by itself, the answer is written as it is spoken and sent after a silence (no send button); a text box only where the browser cannot listen (`frontend/src/lib/voice.ts`)
+- [x] T-35 The interviewer introduces himself and asks for an introduction before the opening question: name and greeting in `content/interviewer.yaml`, put in front of the first question at `POST /start` without a model call; the room prefers an Indian English voice and recogniser
+- [x] T-37 Interviewer voice from a speech model (ADR-0024): `speech` task in `models.yaml`, `LLMGateway.speak` (sentence pieces joined into one WAV), `GET /turns/{seq}/audio` for stored interviewer turns only, room plays it and falls back to the browser voice
+- [x] T-38 Room follow-ups: question text appears in step with the voice; a question the candidate asks at the wrap-up is answered from the job description before the goodbye (shown and spoken on the end screen); R1 always poses one problem-solving topic (`always:` in the round template)
 ## Evaluation (Phase 3)
 - [ ] T-30 `evaluate_interview_job` → report JSON stored
 - [ ] T-31 Contract test for TopicEvaluation (quotes required)

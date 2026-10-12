@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_api_key: SecretStr | None = None
     vllm_base_url: str | None = None
+    kokoro_base_url: str = "http://localhost:8880/v1"  # local speech model (`make up-voice`)
     models_file: str = "content/models.yaml"
 
     smtp_host: str = "localhost"

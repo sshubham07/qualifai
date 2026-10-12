@@ -4,17 +4,20 @@ Responsibilities:
   * route each task to its configured model
   * request structured JSON output and validate it with Pydantic (retry on failure)
   * stream text for live phrasing
+  * turn text into speech (the interviewer's voice)
   * log provider / model / tokens / latency per call (cost + quality analysis later)
 """
 
 from __future__ import annotations
 
+import asyncio
 import time
 from collections.abc import AsyncIterator
 from typing import Protocol, TypeVar
 
 import structlog
-from openai import AsyncOpenAI, BadRequestError
+from openai import AsyncOpenAI, BadRequestError, OpenAIError, RateLimitError
+from openai.resources.audio import AsyncSpeech
 from pydantic import BaseModel, ValidationError
 from tenacity import (
     AsyncRetrying,
@@ -23,13 +26,15 @@ from tenacity import (
     wait_exponential,
 )
 
-from qualifai.domain.errors import LLMOutputError
+from qualifai.domain.errors import LLMOutputError, SpeechUnavailable
 from qualifai.llm.router import ModelRoute, ModelRouter
+from qualifai.llm.speech import MEDIA_TYPES, Speech, chunks_of, join_wav, split_for_speech
 from qualifai.llm.tasks import LLMTask
 
 log = structlog.get_logger(__name__)
 T = TypeVar("T", bound=BaseModel)
 _RETRY_WAIT = wait_exponential(min=0.5, max=4)
+RATE_LIMIT_PAUSE_S = 15.0  # a per-minute quota frees up gradually; ask again a few times a minute
 
 
 def _extra(route: ModelRoute) -> dict[str, str] | None:
@@ -43,6 +48,8 @@ class LLM(Protocol):
 
     def stream(self, task: LLMTask, system: str, user: str) -> AsyncIterator[str]: ...
 
+    async def speak(self, task: LLMTask, text: str) -> Speech: ...
+
 
 class LLMGateway:
     def __init__(self, router: ModelRouter, clients: dict[str, AsyncOpenAI]) -> None:
@@ -50,6 +57,21 @@ class LLMGateway:
         self._clients = clients
 
     async def structured(self, task: LLMTask, system: str, user: str, schema: type[T]) -> T:
+        """Bad output is retried at once; a used-up quota is waited out for as long as the task's
+        route allows (the SDK's own retries give up within seconds of a per-minute limit)."""
+        give_up_at = time.monotonic() + self._router.route(task).rate_limit_patience_s
+        while True:
+            try:
+                return await self._structured_retrying(task, system, user, schema)
+            except RateLimitError:
+                if time.monotonic() + RATE_LIMIT_PAUSE_S > give_up_at:
+                    raise
+                log.info("llm.rate_limited", task=task, pause_s=RATE_LIMIT_PAUSE_S)
+                await asyncio.sleep(RATE_LIMIT_PAUSE_S)
+
+    async def _structured_retrying(
+        self, task: LLMTask, system: str, user: str, schema: type[T]
+    ) -> T:
         # AsyncRetrying rather than @retry: the decorator erases the signature, so the class
         # would no longer satisfy the LLM protocol under mypy.
         async for attempt in AsyncRetrying(
@@ -115,3 +137,67 @@ class LLMGateway:
             delta = chunk.choices[0].delta.content if chunk.choices else None
             if delta:
                 yield delta
+
+    async def speak(self, task: LLMTask, text: str) -> Speech:
+        """`text` as audio. Returns once the first audio has arrived, so a provider that refuses
+        fails here and not halfway through a response. The page has a fallback voice, so this
+        fails fast: no waiting out a rate limit while the candidate sits in silence."""
+        route = self._router.route(task)
+        client = self._clients.get(route.provider)
+        if client is None or route.voice is None:
+            raise SpeechUnavailable(f"{task}: no provider or voice configured")
+        speech = client.with_options(max_retries=0, timeout=route.timeout_s).audio.speech
+        started = time.perf_counter()
+        pieces = split_for_speech(text, route.max_input_chars)
+        try:
+            if route.audio_format == "wav" and len(pieces) > 1:  # WAV files cannot be chained
+                audio = chunks_of(await self._speech_joined(speech, route, pieces))
+            else:
+                rest = self._speech_pieces(speech, route, pieces)
+                audio = chunks_of(await anext(rest), then=rest)
+        except (OpenAIError, StopAsyncIteration) as exc:
+            raise SpeechUnavailable(f"{task}: {exc or 'no audio'}") from exc
+        log.info(
+            "llm.speech",
+            task=task,
+            provider=route.provider,
+            model=route.model,
+            chars=len(text),
+            first_audio_ms=round((time.perf_counter() - started) * 1000),
+        )
+        return Speech(MEDIA_TYPES[route.audio_format], audio)
+
+    @staticmethod
+    async def _speech_pieces(
+        speech: AsyncSpeech, route: ModelRoute, pieces: list[str]
+    ) -> AsyncIterator[bytes]:
+        """One piece after another, each sent on as soon as it is ready: the first sentence is
+        heard while the rest is still being made. A local model speaks faster than real time, so
+        playing does not catch up with it."""
+        for i, piece in enumerate(pieces):
+            try:
+                audio = await speech.create(
+                    model=route.model,
+                    voice=route.voice or "",
+                    input=piece,
+                    response_format=route.audio_format,  # type: ignore[arg-type]
+                )
+            except OpenAIError:
+                if i == 0:
+                    raise
+                log.exception("llm.speech_cut_short", model=route.model, said=i, of=len(pieces))
+                return
+            yield audio.content
+
+    @staticmethod
+    async def _speech_joined(speech: AsyncSpeech, route: ModelRoute, pieces: list[str]) -> bytes:
+        """A model that only answers in WAV: the pieces at once, joined into one file."""
+        audio = await asyncio.gather(
+            *(
+                speech.create(
+                    model=route.model, voice=route.voice or "", input=piece, response_format="wav"
+                )
+                for piece in pieces
+            )
+        )
+        return join_wav([a.content for a in audio])

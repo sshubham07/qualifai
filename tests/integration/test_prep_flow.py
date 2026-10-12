@@ -138,7 +138,8 @@ async def test_prepare_job_stores_kit_marks_ready_and_emails_link(sessions):
     async with sessions() as s:
         kit = await s.get_one(InterviewKit, sub.interview_id)
     plan = InterviewPlan.model_validate(kit.plan)
-    assert {t.skills[0] for t in plan.topics} == {"postgresql", "kubernetes"}
+    # the JD's skills, plus the problem the round always poses (content/rounds/r1_technical.yaml)
+    assert {t.skills[0] for t in plan.topics} == {"postgresql", "kubernetes", "problem_solving"}
     assert all(t.opening_questions and t.rubric for t in plan.topics)
     assert {g["skill"] for g in kit.profile["gaps"]} == {"postgresql", "kubernetes"}
     assert kit.profile["opening_question"] == OPENING

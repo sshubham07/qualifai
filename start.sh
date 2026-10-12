@@ -27,6 +27,8 @@ fi
 
 say "Starting Postgres, Redis, MinIO and Mailpit"
 docker compose up -d --wait postgres redis minio mailpit
+say "Starting the interviewer's voice (Kokoro; the first run downloads the image)"
+docker compose --profile voice up -d kokoro || say "No local voice: the room will use the browser's voice"
 
 [ -d .venv ] || { say "Installing Python dependencies"; uv sync --all-extras; }
 [ -d frontend/node_modules ] || { say "Installing web dependencies"; (cd frontend && npm install); }

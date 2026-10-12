@@ -185,6 +185,8 @@ export type Turn = {
   phase: string | null;
   final_question: boolean;
   draft: string | null; // text autosaved before the page was reloaded
+  farewell?: string | null; // once ended: the interviewer's last words
+  farewell_seq?: number | null;
   started_at: string;
   target_end_at: string;
   server_now: string;
@@ -212,6 +214,9 @@ async function send<T>(path: string, method: string, body?: unknown): Promise<T>
 
 export const startInterview = (id: string, token: string | null) =>
   send<Turn>(`${id}/start`, "POST", { token });
+
+// The interviewer's turn as audio; 503 when the server has no voice, and the page uses its own.
+export const questionAudioUrl = (id: string, seq: number) => `/v1/interviews/${id}/turns/${seq}/audio`;
 
 export const getRoom = (id: string) => send<Turn>(`${id}/room`, "GET");
 

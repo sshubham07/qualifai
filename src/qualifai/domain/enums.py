@@ -88,6 +88,7 @@ class ProbeType(StrEnum):
     VERIFY_CLAIM = "verify_claim"  # high JD weight + strong resume claim
     TEST_GAP = "test_gap"  # high JD weight + weak/no evidence
     LIGHT = "light"  # low JD weight
+    FUNDAMENTALS = "fundamentals"  # the skill itself, apart from the candidate's projects
 
 
 class EvidenceLevel(StrEnum):
@@ -136,6 +137,7 @@ class PolicyAction(StrEnum):
     NEXT_TOPIC = "next_topic"
     CLOSE_TOPIC_TIME = "close_topic_time"
     WRAP_UP = "wrap_up"
+    ANSWER_CANDIDATE = "answer_candidate"  # reply to what the candidate asked at the wrap-up
     END = "end"
 
 

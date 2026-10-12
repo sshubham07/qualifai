@@ -34,6 +34,8 @@ class RoundTemplate(_Strict):
     scored: bool = True
     # The round's own topics (skill -> weight 1..3). Empty: topics come from the JD (ADR-0019).
     skills: dict[str, int] = {}
+    # Asked in addition to the JD's skills (skill -> weight 1..3), e.g. problem solving (ADR-0023).
+    always: dict[str, int] = {}
     rules: str
 
 
@@ -56,6 +58,15 @@ class RoleFamilySpec(_Strict):
     coding_round: bool
 
 
+class Interviewer(_Strict):
+    name: str = Field(min_length=1)
+    greeting: str = Field(min_length=1)  # placeholders: {name}, {minutes}
+
+    def greet(self, minutes: int) -> str:
+        """What the interviewer says before the first question."""
+        return " ".join(self.greeting.format(name=self.name, minutes=minutes).split())
+
+
 def _load(path: Path) -> dict:  # type: ignore[type-arg]
     return yaml.safe_load(path.read_text())  # type: ignore[no-any-return]
 
@@ -63,6 +74,11 @@ def _load(path: Path) -> dict:  # type: ignore[type-arg]
 @cache
 def round_template(round_type: RoundType) -> RoundTemplate:
     return RoundTemplate.model_validate(_load(CONTENT_DIR / "rounds" / f"{round_type.value}.yaml"))
+
+
+@cache
+def interviewer() -> Interviewer:
+    return Interviewer.model_validate(_load(CONTENT_DIR / "interviewer.yaml"))
 
 
 @cache

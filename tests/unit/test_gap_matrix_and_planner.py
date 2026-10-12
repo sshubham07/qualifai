@@ -3,7 +3,12 @@ import pytest
 from qualifai.content.loader import round_template, tier_preset
 from qualifai.domain.enums import CompanyTier, EvidenceLevel, ProbeType, RoundType, TopicPriority
 from qualifai.domain.models import JDSkill, ResumeClaim
-from qualifai.prep.gap_matrix import build_gap_matrix, round_skills
+from qualifai.prep.gap_matrix import (
+    build_gap_matrix,
+    round_skills,
+    with_fundamentals,
+    with_round_extras,
+)
 from qualifai.prep.planner import PlanningConfig, allocate_phases, build_plan, start_difficulty
 
 pytestmark = pytest.mark.unit
@@ -39,6 +44,30 @@ def test_gap_matrix_probe_types():
         rows["postgresql"].probe_type is ProbeType.TEST_GAP
     )  # JD needs it, resume barely shows it
     assert rows["caching"].probe_type is ProbeType.LIGHT
+
+
+def test_a_verified_skill_is_also_asked_about_on_its_own_terms():
+    rows = build_gap_matrix(JD, CLAIMS)
+    asked = with_fundamentals(rows)
+    verified = {r.skill for r in rows if r.probe_type is ProbeType.VERIFY_CLAIM}
+    extra = [r for r in asked if r.probe_type is ProbeType.FUNDAMENTALS]
+
+    assert verified and {r.skill for r in extra} == verified
+    assert all(r.claim_id is None for r in extra)  # not about the candidate's project
+    assert len(asked) == len(rows) + len(verified)
+    assert [r.priority_score for r in asked] == sorted(
+        (r.priority_score for r in asked), reverse=True
+    )
+    by_skill = {r.skill: r for r in rows}
+    assert all(r.priority_score < by_skill[r.skill].priority_score for r in extra)  # claim first
+
+
+def test_a_round_can_always_ask_about_a_skill_the_jd_does_not_list():
+    asked = with_round_extras(JD, {"problem_solving": 2, JD[0].name: 1})
+    assert [s.name for s in asked] == [*(s.name for s in JD), "problem_solving"]  # no duplicate
+    assert asked[0] == JD[0]  # the JD's own weight wins
+    row = next(r for r in build_gap_matrix(asked, CLAIMS) if r.skill == "problem_solving")
+    assert row.probe_type is ProbeType.TEST_GAP and not row.must_have
 
 
 def test_gap_matrix_sorted_by_priority():

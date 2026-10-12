@@ -1,6 +1,12 @@
 import pytest
 
-from qualifai.content.loader import role_family, round_template, skill_aliases, tier_preset
+from qualifai.content.loader import (
+    interviewer,
+    role_family,
+    round_template,
+    skill_aliases,
+    tier_preset,
+)
 from qualifai.domain.enums import (
     CompanyTier,
     FailureCode,
@@ -51,6 +57,12 @@ def test_every_round_template_loads(r):
 def test_every_tier_loads_with_ordered_bands(t):
     b = tier_preset(t).bands
     assert b["strong_hire"] > b["hire"] > b["lean_hire"] > b["lean_no_hire"]
+
+
+def test_interviewer_greets_by_name_with_the_length_and_asks_for_an_introduction():
+    said = interviewer().greet(45)
+    assert interviewer().name in said and "45 minutes" in said
+    assert "introduction" in said and "{" not in said and "\n" not in said
 
 
 def test_taxonomy_normalisation():

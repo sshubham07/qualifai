@@ -7,6 +7,8 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
+from qualifai.domain.errors import SpeechUnavailable
+from qualifai.llm.speech import Speech, chunks_of
 from qualifai.llm.tasks import LLMTask
 
 T = TypeVar("T", bound=BaseModel)
@@ -28,3 +30,9 @@ class FakeLLM:
         text = self._responders[task](system, user)
         for word in str(text).split(" "):
             yield word + " "
+
+    async def speak(self, task: LLMTask, text: str) -> Speech:
+        self.calls.append((task, text))
+        if task not in self._responders:
+            raise SpeechUnavailable(f"{task}: no fake voice")
+        return Speech("audio/wav", chunks_of(str(self._responders[task]("", text)).encode()))

@@ -1,0 +1,8 @@
+# The interviewer the candidate meets. `greeting` is said before the first question of every
+# interview: the interviewer introduces himself and asks for an introduction, the way a real
+# round starts. Placeholders: {name}, {minutes}. The live room reads it aloud (ADR-0022).
+name: Arjun
+greeting: >-
+  Hello, good to meet you. I'm {name}, and I'll be your interviewer for this round.
+  We have about {minutes} minutes together.
+  Please start with a short introduction about yourself, and then take my first question.

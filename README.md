@@ -26,9 +26,10 @@
 |---|---|
 | 🧠 **Code decides, LLM talks** | Next question, timing and verdict are plain Python. The LLM only reads and phrases. |
 | ⏱️ **Real clock** | A server-owned time window (30–60 minutes, by focus) with per-topic budgets. |
+| 🎙️ **It talks, you talk** | The interviewer introduces himself, asks for your introduction and reads each question aloud in a natural voice; you answer out loud. Your words are written as you speak and sent when you stop. No send button. |
 | 💬 **A live room** | Questions stream in word by word, your draft autosaves, and a reload or a server restart picks up where you were. |
 | 🧭 **Pick a focus** | General · DSA · low-level design · high-level design · managerial. Each is a round template in YAML. |
-| 🎯 **About you** | Cross-questions *your* resume claims against what the *JD* needs. |
+| 🎯 **About you** | Cross-questions *your* resume claims against what the *JD* needs, then asks about each skill on its own terms, not only your projects. |
 | 🔍 **Evidence or no score** | Every score cites a quote that is checked against the transcript. |
 | 🏢 **Company-aware** | Service · startup · product · MAANG bars. |
 | 🚦 **Software roles only** | A small local model checks the resume and the JD first. If either isn't software, it stops and says why. |
@@ -59,7 +60,7 @@
 
 ## Go deeper
 
-[Deep dive](docs/deep-dive.md) · [Architecture](docs/architecture/hld.md) · [Decisions (ADRs)](docs/architecture/adr/README.md) · [Specs](docs/specs/001-mvp-r1-technical/spec.md) · [Tests](tests/README.md)
+[Deep dive](docs/deep-dive.md) · [Full architecture](ARCHITECTURE.md) · [HLD](docs/architecture/hld.md) · [Decisions (ADRs)](docs/architecture/adr/README.md) · [Specs](docs/specs/001-mvp-r1-technical/spec.md) · [Tests](tests/README.md)
 
 ---
 

@@ -21,6 +21,7 @@ from qualifai.api.deps import get_clock, get_live
 from qualifai.api.main import create_app
 from qualifai.api.routes.interviews import sse_frames
 from qualifai.container import LiveRuntime
+from qualifai.content.loader import interviewer
 from qualifai.db.models import Base, Interview, InterviewEvent, TurnAnalysis, TurnRow
 from qualifai.db.session import get_session
 from qualifai.domain.clock import FrozenClock, SystemClock
@@ -34,6 +35,8 @@ from qualifai.workers.jobs.hard_stop import hard_stop_job
 from qualifai.workers.jobs.prepare import PrepDeps, hash_token, prepare_interview
 
 pytestmark = pytest.mark.e2e
+# The interviewer introduces himself, then asks the opening question written in prep.
+FIRST_WORDS = f"{interviewer().greet(45)} {OPENING}"
 GRACE_S = 60
 # The hard stop goes into a real queue, which only takes jobs that are due in the future.
 T0 = datetime.now(UTC).replace(microsecond=0) + timedelta(hours=1)
@@ -150,7 +153,7 @@ async def test_a_full_interview_through_the_api(stack):
     assert status["status"] == "ready" and "opening_question" not in status
 
     first = (await s.http.post(f"/v1/interviews/{meet_id}/start")).json()
-    assert (first["question"], first["seq"], first["ended"]) == (OPENING, 1, False)
+    assert (first["question"], first["seq"], first["ended"]) == (FIRST_WORDS, 1, False)
     assert first["started_at"] == first["server_now"]
     row = await s.interview(meet_id)
     assert (row.status, row.started_at, row.hard_end_at) == (
@@ -192,7 +195,7 @@ async def test_a_full_interview_through_the_api(stack):
     assert (row.status, row.end_reason, row.ended_at) == ("completed", "natural", s.clock.now())
     turns = await s.turns(meet_id)
     assert [t.seq for t in turns] == list(range(1, len(turns) + 1))  # append-only, no gaps
-    assert turns[0].text == OPENING and turns[0].shown_at == T0
+    assert turns[0].text == FIRST_WORDS and turns[0].shown_at == T0
     assert turns[0].action_type == "next_topic" and turns[0].difficulty is not None
     answer = turns[1]
     assert (answer.role, answer.text, answer.cut_off) == (
@@ -248,7 +251,7 @@ async def test_ac3_hard_stop_submits_the_draft_and_completes_the_interview(stack
 
     # a reloaded page gets the question and the draft back
     back = (await s.http.get(f"/v1/interviews/{meet_id}/room")).json()
-    assert (back["question"], back["seq"], back["draft"]) == (OPENING, 1, draft["text"])
+    assert (back["question"], back["seq"], back["draft"]) == (FIRST_WORDS, 1, draft["text"])
 
     s.clock.advance(49 * 60)  # too early: the job puts itself back and changes nothing
     await s.hard_stop(meet_id)
@@ -381,6 +384,27 @@ async def test_slow_turns_become_latency_credit_and_move_the_hard_stop(stack):
     assert (await s.interview(meet_id)).end_reason == "hard_stop"
 
 
+async def test_a_question_can_be_fetched_as_audio_and_only_the_interviewers_own_words(stack):
+    s: Stack = stack()
+    meet_id, _ = await s.ready_interview()
+    await s.http.post(f"/v1/interviews/{meet_id}/start")
+    audio = f"/v1/interviews/{meet_id}/turns/1/audio"
+
+    # no speech model: the page is told, and falls back to the browser's voice
+    silent = await s.http.get(audio)
+    assert (silent.status_code, silent.json()["error"]) == (503, "speech_unavailable")
+
+    s.llm._responders[LLMTask.SPEECH] = lambda _s, text: f"WAV:{text}"
+    spoken = await s.http.get(audio)
+    assert spoken.status_code == 200 and spoken.headers["content-type"] == "audio/wav"
+    assert spoken.content == f"WAV:{FIRST_WORDS}".encode()  # the stored turn, word for word
+    assert "max-age" in spoken.headers["cache-control"]
+
+    await s.answer(meet_id, 1)
+    assert (await s.http.get(f"/v1/interviews/{meet_id}/turns/2/audio")).status_code == 404  # ours
+    assert (await s.http.get(f"/v1/interviews/{meet_id}/turns/99/audio")).status_code == 404
+
+
 async def test_start_checks_the_owner_the_state_and_the_expiry(stack):
     s: Stack = stack()
     assert (await s.http.post(f"/v1/interviews/{uuid4()}/start")).status_code == 404
@@ -395,7 +419,7 @@ async def test_start_checks_the_owner_the_state_and_the_expiry(stack):
     assert (await s.http.get(f"/v1/interviews/{meet_id}/room")).status_code == 409
     assert (await s.answer(meet_id, 1)).status_code == 409
     opened = await s.http.post(start, json={"token": token})
-    assert opened.status_code == 200 and opened.json()["question"] == OPENING
+    assert opened.status_code == 200 and opened.json()["question"] == FIRST_WORDS
 
     # ready for more than seven days: too late (spec-001 FR-8)
     stale, _ = await s.ready_interview()

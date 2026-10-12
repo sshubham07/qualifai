@@ -130,6 +130,29 @@ async def test_full_interview_ends_naturally_with_follow_ups_bounded_by_depth():
     assert {"t1", "t2"} <= set(per_topic)  # both must-cover topics were opened
 
 
+async def test_a_question_asked_at_the_wrap_up_is_answered_from_the_job_description():
+    svc, deps, sink, clock, llm = make([0.9])
+    deps = replace(deps, role_brief="Backend engineer on the payments team.")
+    iid = uuid4()
+    turn = await svc.start(
+        iid, plan(), TimeWindow.for_duration(T0, 45), "r1_technical", "product", deps
+    )
+    while turn.phase != "closing":  # answer until the interviewer invites a question
+        clock.advance(150)
+        turn = await svc.submit_answer(iid, "A detailed answer", deps)
+    llm._responders[LLMTask.QUESTION_GEN] = lambda s, u: "You would join the payments team."
+    turn = await svc.submit_answer(iid, "What would I be working on?", deps)
+
+    assert turn.ended and sink.ended is EndReason.NATURAL
+    asked, goodbye = sink.turns[-2], sink.turns[-1]
+    assert (asked[0], asked[3]) == ("candidate", "What would I be working on?")
+    assert goodbye[3].startswith("You would join the payments team.")  # answered, then goodbye
+    assert goodbye[3].endswith("Your detailed report will be ready shortly.")
+    prompt = llm.calls[-1][1]
+    assert "answer_candidate" in prompt and "What would I be working on?" in prompt
+    assert "<job_description>\nBackend engineer on the payments team." in prompt
+
+
 async def test_hard_stop_closes_interview():
     svc, deps, sink, clock, _ = make([0.5])
     iid = uuid4()
@@ -137,7 +160,7 @@ async def test_hard_stop_closes_interview():
     clock.advance(51 * 60)
     turn = await svc.hard_stop(iid, deps)
     assert sink.ended is EndReason.HARD_STOP and turn.end_reason is EndReason.HARD_STOP
-    assert "out of time" in sink.turns[-1][3]
+    assert "end of the interview" in sink.turns[-1][3]
     assert [role for role, *_ in sink.turns] == [
         "interviewer",
         "interviewer",

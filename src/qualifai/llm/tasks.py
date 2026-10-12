@@ -15,6 +15,7 @@ class LLMTask(StrEnum):
     TURN_ANALYZER = "turn_analyzer"
     QUESTION_GEN = "question_gen"
     CODING_HELPER = "coding_helper"
+    SPEECH = "speech"  # the interviewer's voice: text in, audio out (ADR-0024)
     # Phase 3 — Evaluation (quality matters most)
     TOPIC_EVAL = "topic_eval"
     CODE_REVIEW = "code_review"

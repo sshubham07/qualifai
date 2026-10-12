@@ -77,6 +77,8 @@ class NextQuestionOut(BaseModel):
     phase: str | None = None
     final_question: bool = False
     draft: str | None = None  # GET /room only: text autosaved before the page was reloaded
+    farewell: str | None = None  # once ended: the interviewer's last words
+    farewell_seq: int | None = None  # ... and their turn, for the audio
     started_at: datetime
     target_end_at: datetime
     server_now: datetime

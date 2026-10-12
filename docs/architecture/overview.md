@@ -23,7 +23,7 @@ It is **not a RAG application.** Retrieval appears only as a supporting componen
 - Free to run: open-weight models (local or free hosted tiers) behind one gateway.
 
 ## Non-goals (MVP)
-- Voice, avatar, webcam (deferred — ADR-0006).
+- Server-side speech models, avatar, webcam (deferred — ADR-0006; the room's voice is the browser's own, ADR-0022).
 - Non-technical roles (declined at intake — ADR-0013).
 - Company-by-company logic (replaced by round × tier — ADR-0009).
 - Screening real candidates for employers.

@@ -1,6 +1,8 @@
 # QualifAI Web
 
-Thin single-page app — **no AI runs in the browser** (ADR-0006). React + Vite, TypeScript,
+Thin single-page app — **no model runs in the browser** (ADR-0006); the interview room uses the
+browser's own speech recognition for spoken answers (ADR-0022) and plays each question from the
+server's speech model, with the browser's voice as the fallback (ADR-0024). React + Vite, TypeScript,
 Tailwind, React Router (ADR-0015).
 
 ```bash
@@ -17,7 +19,7 @@ status page shows a Meet ID and its link is the way back.
 | Home | `/` | `src/pages/Home.tsx` | Explains the flow: share the role → kit prepared → interview → report | — | built |
 | Setup | `/start` | `src/pages/Start.tsx` | Resume text, JD text, company type, experience range | `POST /v1/interviews` | built |
 | Prep status | `/interviews/{id}` | `src/pages/Interview.tsx` | Submitted → Preparing → Ready, with the Meet ID to copy (polls every 3 s; SSE comes with T-15) | `GET /v1/interviews/{id}` | built |
-| Interview | — | — | Streamed question, answer box (draft autosave), elapsed time, phase indicator | `POST /v1/interviews/{id}/answers`, SSE | Phase 2 |
+| Interview | `/interviews/{id}` (in progress) | `src/pages/Room.tsx`, `src/lib/voice.ts` | Question streamed and read aloud, answer written as it is spoken and sent after a silence (draft autosave; text box where the browser cannot listen), elapsed time, phase indicator | `POST /v1/interviews/{id}/answers`, SSE | built |
 | Report | — | — | Scorecard, claims table, evidence, prep plan | `GET /v1/interviews/{id}/report` | Phase 3 |
 
 `src/lib/api.ts` is the only place that calls the API; its input limits mirror `InterviewRequest`

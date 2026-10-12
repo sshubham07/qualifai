@@ -13,6 +13,9 @@ up: ## Start infra (postgres, redis, minio, mailpit)
 up-llm: ## Start local Ollama too
 	docker compose --profile llm up -d
 
+up-voice: ## Start the local speech model (Kokoro) for the interviewer's voice
+	docker compose --profile voice up -d kokoro
+
 down: ## Stop everything
 	docker compose down
 

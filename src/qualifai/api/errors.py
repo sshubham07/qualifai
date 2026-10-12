@@ -8,6 +8,7 @@ from qualifai.domain.errors import (
     InterviewStateError,
     LLMOutputError,
     NotInterviewOwner,
+    SpeechUnavailable,
 )
 
 
@@ -32,4 +33,10 @@ def register_error_handlers(app: FastAPI) -> None:
     async def _llm(_: Request, exc: LLMOutputError) -> JSONResponse:
         return JSONResponse(
             status_code=503, content={"error": "model_unavailable", "message": str(exc)}
+        )
+
+    @app.exception_handler(SpeechUnavailable)
+    async def _speech(_: Request, exc: SpeechUnavailable) -> JSONResponse:
+        return JSONResponse(
+            status_code=503, content={"error": "speech_unavailable", "message": str(exc)}
         )

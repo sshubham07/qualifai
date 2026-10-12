@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from openai import BadRequestError
+from openai import BadRequestError, RateLimitError
 from pydantic import ValidationError
 from tenacity import wait_none
 from tests.prep_fakes import JD, RESUME, intake, request
@@ -183,8 +183,8 @@ class _FlakyClient:
         return type("Resp", (), {"choices": [_Msg(content)], "usage": None})()
 
 
-def _gateway(fake: _FlakyClient) -> LLMGateway:
-    route = ModelRoute(provider="p", model="m")
+def _gateway(fake: _FlakyClient, patience_s: float = 0.0) -> LLMGateway:
+    route = ModelRoute(provider="p", model="m", rate_limit_patience_s=patience_s)
     return LLMGateway(ModelRouter(dict.fromkeys(LLMTask, route)), {"p": fake})  # type: ignore[dict-item]
 
 
@@ -243,3 +243,22 @@ def test_api_serves_the_built_web_app_without_shadowing_api_routes(tmp_path):
 def test_api_runs_without_a_frontend_build():
     http = TestClient(create_app(NO_FRONTEND))
     assert http.get("/healthz").status_code == 200 and http.get("/").status_code == 404
+
+
+def _rate_limited() -> RateLimitError:
+    response = httpx.Response(429, request=httpx.Request("POST", "http://provider"))
+    return RateLimitError("tokens per minute used up", response=response, body=None)
+
+
+async def test_gateway_waits_out_a_used_up_quota_only_when_the_route_allows(monkeypatch):
+    monkeypatch.setattr(gateway, "RATE_LIMIT_PAUSE_S", 0.0)
+    patient = _FlakyClient(bad=3, error=_rate_limited())  # prep: a background job can wait
+    out = await _gateway(patient, patience_s=60).structured(
+        LLMTask.TOPIC_PACK, "s", "u", IntakeResult
+    )
+    assert out.is_resume and patient.calls == 4
+
+    live = _FlakyClient(bad=3, error=_rate_limited())  # a live call cannot
+    with pytest.raises(RateLimitError):
+        await _gateway(live).structured(LLMTask.TURN_ANALYZER, "s", "u", IntakeResult)
+    assert live.calls == 1

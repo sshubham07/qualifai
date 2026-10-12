@@ -8,18 +8,26 @@ providers:
   ollama: { base_url_env: QUALIFAI_OLLAMA_BASE_URL }
   groq:   { base_url_env: QUALIFAI_GROQ_BASE_URL, api_key_env: QUALIFAI_GROQ_API_KEY }
   vllm:   { base_url_env: QUALIFAI_VLLM_BASE_URL }
+  kokoro: { base_url_env: QUALIFAI_KOKORO_BASE_URL }   # local Kokoro-82M speech server
 
 tasks:
-  # Phase 1 — Prep (large; slow is fine)
+  # Phase 1 — Prep (large; slow is fine). `rate_limit_patience_s`: a free tier allows few tokens per
+  # minute and a plan needs up to ten topic packs, so prep waits for the quota instead of failing.
   intake_gate:         { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.0, max_tokens: 300, timeout_s: 120, reasoning_effort: none }  # first call loads the model
-  resume_extract:      { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 2500, reasoning_effort: low }
-  jd_extract:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 1500, reasoning_effort: low }
-  topic_selection:     { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.2, max_tokens: 1500 }
-  topic_pack:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.3, max_tokens: 1400, reasoning_effort: low }
-  opening_question:    { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.4, max_tokens: 500, reasoning_effort: low }
+  resume_extract:      { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 2500, reasoning_effort: low, rate_limit_patience_s: 300 }
+  jd_extract:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.0, max_tokens: 1500, reasoning_effort: low, rate_limit_patience_s: 300 }
+  topic_selection:     { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.2, max_tokens: 1500, rate_limit_patience_s: 300 }
+  topic_pack:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.3, max_tokens: 1400, reasoning_effort: low, rate_limit_patience_s: 300 }
+  opening_question:    { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.4, max_tokens: 500, reasoning_effort: low, rate_limit_patience_s: 300 }
   # Phase 2 — Live (fast)
   turn_analyzer:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.0, max_tokens: 900, timeout_s: 15, reasoning_effort: low }
   question_gen:        { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.6, max_tokens: 150, timeout_s: 15, reasoning_effort: none }
+  # The interviewer's voice (ADR-0024): Kokoro-82M, open-weight, run locally (`make up-voice`).
+  # `voice` is one of the model's own voices (am_* / af_* American, bm_* / bf_* British).
+  # The text is sent in pieces of `max_input_chars` (cut at sentence ends) so the first sentence is
+  # heard while the rest is being made. A hosted alternative:
+  #   { provider: groq, model: "canopylabs/orpheus-v1-english", voice: troy, max_input_chars: 200 }
+  speech:              { provider: kokoro, model: "kokoro", voice: am_michael, audio_format: mp3, max_input_chars: 90, timeout_s: 30 }
   coding_helper:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.2, max_tokens: 400 }
   # Phase 3 — Evaluation (quality matters most)
   topic_eval:          { provider: groq,   model: "qwen/qwen3.8-27b",    temperature: 0.0, max_tokens: 1200 }

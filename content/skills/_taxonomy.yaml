@@ -3,7 +3,7 @@ skills:
   python: { aliases: [python3, py] }
   fastapi: { aliases: [fast api], parent: python }
   django: { aliases: [django rest framework, drf], parent: python }
-  api_design: { aliases: [rest, rest api, restful, api, http apis, grpc] }
+  api_design: { aliases: [rest, rest api, rest apis, restful, restful apis, api, apis, http apis, grpc] }
   relational_db: { aliases: [sql, rdbms, relational databases] }
   postgresql: { aliases: [postgres, psql, postgre sql], parent: relational_db }
   mysql: { aliases: [my sql, mariadb], parent: relational_db }
@@ -14,4 +14,9 @@ skills:
   system_design: { aliases: [distributed systems, scalability, microservices] }
   integration_patterns: { aliases: [mulesoft, anypoint, esb, dataweave] }
   error_handling: { aliases: [retries, idempotency] }
+  nosql: { aliases: [mongodb, mongo, dynamodb, cassandra, document databases] }
+  cloud: { aliases: [aws, amazon web services, azure, gcp, google cloud, cloud platforms] }
+  ci_cd: { aliases: [ci/cd, cicd, ci cd, jenkins, github actions, gitlab ci, azure devops, deployment pipelines] }
+  testing: { aliases: [unit testing, unit tests, pytest, tdd, test automation, integration testing] }
+  problem_solving: { aliases: [dsa, data structures, algorithms, data structures and algorithms, problem solving] }
   behavioral: { aliases: [communication, leadership, teamwork] }

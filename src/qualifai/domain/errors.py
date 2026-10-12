@@ -23,6 +23,10 @@ class LLMOutputError(QualifAIError):
     """Model returned output that failed schema validation after retries."""
 
 
+class SpeechUnavailable(QualifAIError):
+    """The speech model could not voice a question; the page falls back to its own voice."""
+
+
 class PrepRejected(QualifAIError):
     """Prep decided not to build a kit. The interview becomes FAILED with this code and reason."""
 

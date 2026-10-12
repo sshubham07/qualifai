@@ -360,7 +360,7 @@ Details: [`tests/README.md`](../tests/README.md). Current scaffold: **125 tests 
 - **Small-model judgement** is the main risk. Mitigated (large-model rubrics, seed anchors, evidence check, evals), not eliminated.
 - **No ground truth** for scores until the eval harness and human-labelled answers exist; treat reports as practice feedback, not hiring decisions.
 - **Free-tier quotas** allow roughly one full interview per model per day; heavier use needs local models or a rented GPU.
-- **Text mode** loses spoken pressure and allows pasting (recorded as integrity flags, not blocked).
+- **Voice**: the interviewer speaks through a local speech model, Kokoro-82M (ADR-0024), and falls back to the browser's voice when it is not running. Listening is the browser's (ADR-0022): Firefox cannot listen and falls back to typing, speech recognition can mishear technical terms and a spoken answer is sent as heard, and a long pause mid-answer ends it. In the typing fallback, pasting stays possible (recorded as integrity flags, not blocked).
 - **Backend SDE only** in MVP; nearby technical roles run in limited mode; non-technical roles are declined.
 - **Content-bound quality:** skills without a seed bank are generated "unanchored" and marked lower-confidence.
 - **Local hardware:** a laptop handles roughly one live interview at a time; fanless machines throttle.

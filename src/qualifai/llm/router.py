@@ -18,6 +18,12 @@ class ModelRoute:
     max_tokens: int = 1024
     timeout_s: float = 60.0
     reasoning_effort: str | None = None  # "none" stops a thinking model spending the budget
+    # How long to keep trying when the provider says its per-minute quota is used up. Prep is a
+    # background job and can wait a few minutes; a live call cannot.
+    rate_limit_patience_s: float = 0.0
+    voice: str | None = None  # speech models: which voice
+    max_input_chars: int | None = None  # speech models: longest text one request may carry
+    audio_format: str = "wav"  # speech models: wav or mp3
 
 
 class ModelRouter:

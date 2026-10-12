@@ -56,3 +56,30 @@ export const Spinner = ({ className = "" }: { className?: string }) => (
     className={`inline-block animate-spin rounded-full border-2 border-current border-t-transparent ${className}`}
   />
 );
+
+export const MicIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+  </Icon>
+);
+
+export const PauseIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon strokeWidth={2.4} {...p}>
+    <path d="M9 6v12M15 6v12" />
+  </Icon>
+);
+
+export const SpeakerIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M4 10v4h3.5L12 18V6l-4.5 4z" />
+    <path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10" />
+  </Icon>
+);
+
+export const SpeakerOffIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M4 10v4h3.5L12 18V6l-4.5 4z" />
+    <path d="m16 9.5 5 5M21 9.5l-5 5" />
+  </Icon>
+);

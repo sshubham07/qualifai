@@ -25,3 +25,6 @@ Format: MADR-lite. New ADRs via the `write-adr` skill. Never edit an accepted de
 | [0019](0019-interview-focus-is-the-round.md) | The interview focus is the round; a focused round brings its own topics | Accepted |
 | [0020](0020-live-room-lock-graph-time-repeatable-writes.md) | The live room locks the interview row, the graph keeps its own time, transcript writes are repeatable | Accepted |
 | [0021](0021-every-submission-is-a-new-interview.md) | Every submission is a new interview; kits are not reused | Accepted |
+| [0022](0022-voice-in-the-browser-transcript-stays-text.md) | The live room talks: voice runs in the browser, the transcript stays text | Accepted |
+| [0023](0023-fundamentals-topics-beside-verified-claims.md) | A verified skill is also asked about on its own terms | Accepted |
+| [0024](0024-interviewer-voice-from-a-speech-model.md) | The interviewer's voice comes from a speech model; the browser's voice is the fallback | Accepted |
