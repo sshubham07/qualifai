@@ -3,7 +3,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from qualifai.domain.errors import InterviewStateError, LLMOutputError
+from qualifai.domain.errors import (
+    InterviewNotFound,
+    InterviewStateError,
+    LLMOutputError,
+    NotInterviewOwner,
+)
 
 
 def register_error_handlers(app: FastAPI) -> None:
@@ -12,6 +17,16 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=409, content={"error": "invalid_state", "message": str(exc)}
         )
+
+    @app.exception_handler(InterviewNotFound)
+    async def _missing(_: Request, exc: InterviewNotFound) -> JSONResponse:
+        return JSONResponse(
+            status_code=404, content={"error": "not_found", "message": "Interview not found"}
+        )
+
+    @app.exception_handler(NotInterviewOwner)
+    async def _owner(_: Request, exc: NotInterviewOwner) -> JSONResponse:
+        return JSONResponse(status_code=403, content={"error": "forbidden", "message": str(exc)})
 
     @app.exception_handler(LLMOutputError)
     async def _llm(_: Request, exc: LLMOutputError) -> JSONResponse:

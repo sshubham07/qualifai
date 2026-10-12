@@ -18,7 +18,7 @@ tasks:
   topic_pack:          { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.3, max_tokens: 1400, reasoning_effort: low }
   opening_question:    { provider: groq,   model: "openai/gpt-oss-120b", temperature: 0.4, max_tokens: 500, reasoning_effort: low }
   # Phase 2 — Live (fast)
-  turn_analyzer:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.0, max_tokens: 400, timeout_s: 15 }
+  turn_analyzer:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.0, max_tokens: 900, timeout_s: 15, reasoning_effort: low }
   question_gen:        { provider: ollama, model: "gemma4:e2b-it-qat", temperature: 0.6, max_tokens: 150, timeout_s: 15, reasoning_effort: none }
   coding_helper:       { provider: groq,   model: "openai/gpt-oss-20b",  temperature: 0.2, max_tokens: 400 }
   # Phase 3 — Evaluation (quality matters most)

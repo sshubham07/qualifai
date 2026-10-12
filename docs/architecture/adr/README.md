@@ -23,3 +23,4 @@ Format: MADR-lite. New ADRs via the `write-adr` skill. Never edit an accepted de
 | [0017](0017-meet-id-email-deferred.md) | The candidate keeps a meet id; email is optional and deferred | Accepted |
 | [0018](0018-resume-jd-match-gate-failed-terminal.md) | A resume–JD match check stops prep; FAILED is terminal | Accepted |
 | [0019](0019-interview-focus-is-the-round.md) | The interview focus is the round; a focused round brings its own topics | Accepted |
+| [0020](0020-live-room-lock-graph-time-repeatable-writes.md) | The live room locks the interview row, the graph keeps its own time, transcript writes are repeatable | Accepted |

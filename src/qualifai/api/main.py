@@ -14,12 +14,15 @@ from qualifai import __version__
 from qualifai.api.errors import register_error_handlers
 from qualifai.api.routes import health, interviews
 from qualifai.config.settings import get_settings
+from qualifai.container import open_live_runtime
+from qualifai.db.session import SessionFactory
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.arq = await create_pool(RedisSettings.from_dsn(get_settings().redis_url))
-    yield
+    async with open_live_runtime(app.state.arq, SessionFactory) as app.state.live:
+        yield
     await app.state.arq.aclose()
 
 

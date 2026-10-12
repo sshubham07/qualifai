@@ -5,7 +5,6 @@ dead end (ADR-0018)."""
 
 from __future__ import annotations
 
-import hashlib
 import secrets
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -26,6 +25,7 @@ from qualifai.domain.errors import LLMOutputError, PrepRejected
 from qualifai.domain.failures import FAILURE_REASONS
 from qualifai.domain.lifecycle import transition
 from qualifai.domain.models import InterviewRequest
+from qualifai.domain.tokens import hash_token
 from qualifai.llm.gateway import LLM
 from qualifai.notifications.email import send_kit_ready
 from qualifai.prep.intake_gate import decide, run_intake
@@ -43,10 +43,6 @@ class PrepDeps:
     send_ready: SendReady
     base_url: str
     kit_ttl_days: int
-
-
-def hash_token(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def _request(interview: Interview) -> InterviewRequest:

@@ -1,6 +1,6 @@
 # Plan 001
 
-Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015, 0016, 0017, 0018.
+Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020.
 
 ## Modules
 | Area | Module | Kind |
@@ -15,7 +15,8 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 
 | Clock | `interview/time_window.py` | pure |
 | Policy | `interview/policy.py`, `coverage.py`, `topic_selector.py` | pure |
 | Context | `interview/context_compiler.py` | pure |
-| Loop | `interview/graph.py`, `service.py` | LangGraph |
+| Loop | `interview/graph.py`, `service.py`, `checkpoint.py` | LangGraph + Postgres checkpointer |
+| Room | `interview/room.py`, `db/repositories/turns.py`, `storage/live.py` | row lock, lifecycle, transcript sink, drafts + events |
 | Evaluation | `eval/topic_evaluator.py` (LLM), `evidence_check.py`, `aggregation.py`, `verdict.py` (pure), `narrative.py` (LLM), `report_renderer.py` (Jinja) | mixed |
 | Jobs | `workers/jobs/*` | arq |
 
@@ -26,10 +27,13 @@ Related ADRs: 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0012, 0013, 
    `prepare_kit`: extraction → gap matrix → match check (a mismatch is FAILED with a reason,
    ADR-0018) → plan → topic packs + opening question (progress → Redis pub/sub → SSE) → kit
    stored → READY → email.
-3. `POST /start`: TimeWindow.for_duration → persist window → schedule `hard_stop_job` at
-   hard_end + 60 s → `InterviewService.start` → first question.
-4. `POST /answers`: integrity events → `submit_answer` (graph resumes) → next question or end →
-   on end enqueue `evaluate_interview_job`.
+3. `POST /start`: lock the interview row → owner / READY / not expired → TimeWindow.for_duration →
+   `InterviewService.start` (first question = the kit's opening question, no model call) →
+   schedule `hard_stop_job` at hard_end + 60 s → persist window, IN_PROGRESS.
+4. `POST /answers`: lock the row → the answer must name the pending `question_seq` → graph
+   resumes (answer + integrity events committed, analysed, policy decides, next question streamed
+   over SSE) → latency credit stored → next question, or COMPLETED + enqueue
+   `evaluate_interview_job`. `PUT /draft` autosaves to Redis; `GET /room` serves a reloaded page.
 5. Worker: `evaluate_interview` → report JSON → HTML → email.
 
 ## Risks & mitigations

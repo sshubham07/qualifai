@@ -105,7 +105,6 @@ export type StatusOut = Accepted & {
   failure_code: string | null;
   failure_reason: string | null;
   progress: string[]; // prep steps started so far; while preparing the last one is running
-  opening_question: string | null; // set once the interview is ready
   expires_at: string | null;
   server_now: string;
 };
@@ -175,3 +174,51 @@ export async function getInterview(id: string): Promise<StatusOut> {
   if (!res.ok) throw await errorFrom(res);
   return res.json();
 }
+
+// ---- the live interview
+
+// Where the interview stands: a question to answer, or the end.
+export type Turn = {
+  question: string | null;
+  seq: number | null; // sent back as `question_seq` with the answer
+  ended: boolean;
+  phase: string | null;
+  final_question: boolean;
+  draft: string | null; // text autosaved before the page was reloaded
+  started_at: string;
+  target_end_at: string;
+  server_now: string;
+};
+
+// What the page saw while the answer was typed. Offsets are from when the question appeared.
+export type AnswerInput = {
+  question_seq: number;
+  text: string;
+  first_keystroke_ms: number | null;
+  idle_ms: number; // longest pause without typing
+  pastes: { at_ms: number; chars: number }[];
+};
+
+async function send<T>(path: string, method: string, body?: unknown): Promise<T> {
+  const res = await fetch(`/v1/interviews/${path}`, {
+    method,
+    cache: "no-store",
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw await errorFrom(res);
+  return (res.status === 204 ? undefined : await res.json()) as T;
+}
+
+export const startInterview = (id: string, token: string | null) =>
+  send<Turn>(`${id}/start`, "POST", { token });
+
+export const getRoom = (id: string) => send<Turn>(`${id}/room`, "GET");
+
+export const submitAnswer = (id: string, answer: AnswerInput) =>
+  send<Turn>(`${id}/answers`, "POST", answer);
+
+export const saveDraft = (id: string, question_seq: number, text: string) =>
+  send<void>(`${id}/draft`, "PUT", { question_seq, text });
+
+export const ANSWER_MAX = 8000; // mirrors Answer in src/qualifai/domain/models.py

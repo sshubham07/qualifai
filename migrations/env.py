@@ -16,14 +16,24 @@ if config.config_file_name:
 target_metadata = Base.metadata
 
 
+def include_name(name: str | None, type_: str, parent_names: object) -> bool:
+    """LangGraph's checkpointer creates and migrates its own tables (interview/checkpoint.py);
+    autogenerate must not try to drop them."""
+    return not (type_ == "table" and (name or "").startswith("checkpoint"))
+
+
 def run_migrations_offline() -> None:
-    context.configure(url=get_settings().database_url, target_metadata=target_metadata)
+    context.configure(
+        url=get_settings().database_url, target_metadata=target_metadata, include_name=include_name
+    )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def _do_run(connection) -> None:  # type: ignore[no-untyped-def]
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, target_metadata=target_metadata, include_name=include_name
+    )
     with context.begin_transaction():
         context.run_migrations()
 

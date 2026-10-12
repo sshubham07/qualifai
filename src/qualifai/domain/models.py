@@ -157,6 +157,28 @@ class Turn(Frozen):
     cut_off: bool = False
 
 
+class PasteEvent(Frozen):
+    at_ms: int = Field(ge=0)  # since the question was shown
+    chars: int = Field(ge=1)
+
+
+class Answer(Frozen):
+    """One submitted answer plus what the browser saw while it was typed (integrity signals)."""
+
+    question_seq: int = Field(ge=1)  # the question being answered: a double submit is refused
+    text: str = Field(min_length=1, max_length=8000)
+    first_keystroke_ms: int | None = Field(default=None, ge=0)  # since the question was shown
+    idle_ms: int = Field(default=0, ge=0)  # longest pause without typing
+    pastes: tuple[PasteEvent, ...] = Field(default=(), max_length=50)
+
+
+class Draft(Frozen):
+    """Autosaved, unsubmitted answer text. Lives in Redis; submitted by the hard stop."""
+
+    question_seq: int = Field(ge=1)
+    text: str = Field(max_length=8000)
+
+
 # ------------------------------------------------------------------ eval
 class EvidenceQuote(Frozen):
     turn_seq: int

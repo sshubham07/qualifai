@@ -1,9 +1,19 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { CheckIcon, Spinner } from "../components/icons";
 import type { Mood } from "../components/Robot";
-import { ApiError, type StatusOut, focusName, getInterview, roleName } from "../lib/api";
+import {
+  ApiError,
+  type StatusOut,
+  type Turn,
+  focusName,
+  getInterview,
+  getRoom,
+  roleName,
+  startInterview,
+} from "../lib/api";
 import { useGuide } from "../lib/guide";
+import { Room } from "./Room";
 
 const POLL_MS = 3000;
 const PREP_STEPS = [
@@ -130,30 +140,37 @@ function Message(props: { title: string; body: string; retry?: boolean }) {
   );
 }
 
-function StartButton({ openingQuestion }: { openingQuestion: string | null }) {
-  const [clicked, setClicked] = useState(false);
+function StartButton({ id, onStarted }: { id: string; onStarted: (turn: Turn) => void }) {
+  const [params] = useSearchParams();
+  const [starting, setStarting] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  async function start() {
+    setStarting(true);
+    setProblem(null);
+    try {
+      onStarted(await startInterview(id, params.get("token"))); // token: from an emailed link
+    } catch (err) {
+      setProblem(err instanceof Error ? err.message : "Could not start the interview.");
+      setStarting(false);
+    }
+  }
+
   return (
     <div className="mt-6">
-      {/* TODO(spec-001 T-22): call POST /start and open the interview room. */}
       <button
         type="button"
-        onClick={() => setClicked(true)}
-        className="rounded-full bg-brand px-7 py-3 font-medium text-white shadow-sm transition hover:bg-brand-dark"
+        onClick={start}
+        disabled={starting}
+        className="rounded-full bg-brand px-7 py-3 font-medium text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-60"
       >
-        Start your interview
+        {starting ? "Opening the room…" : "Start your interview"}
       </button>
-      {clicked && (
-        <div role="status" className="mt-4 text-sm text-muted">
-          <p>The interview room isn't built yet. Your questions are saved and waiting.</p>
-          {openingQuestion && (
-            <>
-              <p className="mt-3">It will open with:</p>
-              <blockquote className="mt-1 border-l-2 border-brand pl-3 text-[15px] text-ink">
-                {openingQuestion}
-              </blockquote>
-            </>
-          )}
-        </div>
+      <p className="mt-3 text-sm text-muted">The clock starts as soon as you click.</p>
+      {problem && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {problem}
+        </p>
       )}
     </div>
   );
@@ -203,6 +220,12 @@ function guideLine(data: StatusOut | null, problem: Error | null): [string | nul
       return ["I couldn't build this one. The reason is on the page; start again once you've changed it.", "think"];
     case "expired":
       return ["This one ran out of time. Start a new interview and I'll prepare it again.", "think"];
+    case "in_progress":
+      return [null, "talk"]; // the room speaks for itself
+    case "completed":
+    case "evaluating":
+    case "report_ready":
+      return ["That's the interview. Thank you, your answers are saved.", "happy"];
     default:
       return [
         `All set! Start when you have about ${data.target_minutes} quiet minutes. You get one attempt.`,
@@ -211,8 +234,11 @@ function guideLine(data: StatusOut | null, problem: Error | null): [string | nul
   }
 }
 
+const FINISHED = ["completed", "evaluating", "report_ready"];
+
 function PrepStatus({ id }: { id: string }) {
   const [data, setData] = useState<StatusOut | null>(null);
+  const [turn, setTurn] = useState<Turn | null>(null);
   const [problem, setProblem] = useState<ApiError | Error | null>(null);
 
   useEffect(() => {
@@ -222,8 +248,11 @@ function PrepStatus({ id }: { id: string }) {
     async function poll() {
       try {
         const next = await getInterview(id);
+        // Reloaded mid-interview: fetch the question that is waiting, and the saved draft.
+        const room = next.status === "in_progress" ? await getRoom(id) : null;
         if (stopped) return;
         setData(next);
+        if (room) setTurn(room);
         setProblem(null);
         if (next.status === "submitted" || next.status === "preparing") {
           timer = setTimeout(poll, POLL_MS);
@@ -243,7 +272,10 @@ function PrepStatus({ id }: { id: string }) {
     };
   }, [id]);
 
-  useGuide(...guideLine(data, problem));
+  const [says, mood] = turn ? [null, "talk" as Mood] : guideLine(data, problem); // the room speaks
+  useGuide(says, mood);
+
+  if (turn) return <Room id={id} initial={turn} />;
 
   if (!data) {
     if (problem instanceof ApiError && (problem.status === 404 || problem.status === 422)) {
@@ -288,6 +320,15 @@ function PrepStatus({ id }: { id: string }) {
     );
   }
 
+  if (FINISHED.includes(data.status)) {
+    return (
+      <Message
+        title="Interview complete"
+        body="Thank you. Every answer is saved. Your report will appear here once it has been written."
+      />
+    );
+  }
+
   const preparing = data.status === "submitted" || data.status === "preparing";
 
   return (
@@ -320,7 +361,7 @@ function PrepStatus({ id }: { id: string }) {
           </p>
         )}
 
-        {!preparing && <StartButton openingQuestion={data.opening_question} />}
+        {!preparing && <StartButton id={id} onStarted={setTurn} />}
 
         <PrepSteps started={data.progress} preparing={preparing} />
       </Card>

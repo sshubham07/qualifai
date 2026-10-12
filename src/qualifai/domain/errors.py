@@ -11,6 +11,14 @@ class InterviewStateError(QualifAIError):
     """Illegal lifecycle transition (e.g. starting an expired interview)."""
 
 
+class InterviewNotFound(QualifAIError):
+    """No interview with this meet id."""
+
+
+class NotInterviewOwner(QualifAIError):
+    """The interview was sent to an email address and the link's token is missing or wrong."""
+
+
 class LLMOutputError(QualifAIError):
     """Model returned output that failed schema validation after retries."""
 

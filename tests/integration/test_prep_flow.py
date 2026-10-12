@@ -324,8 +324,7 @@ async def test_status_endpoint_follows_prep_and_returns_server_time(sessions):
     assert (before["status"], before["progress"], before["expires_at"]) == ("preparing", [], None)
     assert (before["detected_role"], before["support"]) == (None, None)
     assert (before["round_type"], before["target_minutes"]) == ("r1_technical", 45)
-    assert (before["opening_question"], after["opening_question"]) == (None, OPENING)
-    assert failed["opening_question"] is None
+    assert "opening_question" not in after  # asked by POST /start, not shown beforehand (T-22)
     assert after["status"] == "ready" and len(after["progress"]) == 6
     assert (after["detected_role"], after["support"]) == ("backend_sde", "full")
     assert (failed["status"], failed["failure_code"]) == ("failed", "resume_not_software")

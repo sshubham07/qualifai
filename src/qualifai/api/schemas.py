@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from qualifai.content.loader import round_template
 from qualifai.domain.enums import InterviewStatus, RoundType
-from qualifai.domain.models import InterviewRequest
+from qualifai.domain.models import Answer, Draft, InterviewRequest
 
 
 class InterviewIn(InterviewRequest):
@@ -52,23 +52,31 @@ class InterviewStatusOut(BaseModel):
     failure_code: str | None = None
     failure_reason: str | None = None
     progress: list[str] = []  # prep steps started so far; while PREPARING the last is running
-    opening_question: str | None = None  # READY only; moves behind POST /start with T-22
     expires_at: datetime | None = None
     started_at: datetime | None = None
     target_end_at: datetime | None = None
     server_now: datetime
 
 
-class AnswerIn(BaseModel):
-    text: str = Field(max_length=8000)
-    shown_at: datetime
-    first_keystroke_at: datetime | None = None
-    submitted_at: datetime
-    pasted: bool = False
+class StartIn(BaseModel):
+    token: str | None = Field(default=None, max_length=200)  # from the emailed link, if any
+
+
+class AnswerIn(Answer):
+    """POST /answers body: the answer plus the integrity signals the page collected."""
+
+
+class DraftIn(Draft):
+    """PUT /draft body: the text typed so far, autosaved every few seconds."""
 
 
 class NextQuestionOut(BaseModel):
     question: str | None
+    seq: int | None = None  # send it back as `question_seq` with the answer
     ended: bool
     phase: str | None = None
     final_question: bool = False
+    draft: str | None = None  # GET /room only: text autosaved before the page was reloaded
+    started_at: datetime
+    target_end_at: datetime
+    server_now: datetime

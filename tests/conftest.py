@@ -41,3 +41,25 @@ def policy_input(**kw: object) -> PolicyInput:
     }
     base.update(kw)
     return PolicyInput(**base)  # type: ignore[arg-type]
+
+
+# ---- real Postgres / Redis via testcontainers (integration + HTTP e2e); skipped without Docker
+@pytest.fixture(scope="session")
+def pg_url():
+    containers = pytest.importorskip("testcontainers.postgres")
+    try:
+        with containers.PostgresContainer("pgvector/pgvector:pg16", driver="asyncpg") as pg:
+            yield pg.get_connection_url()
+    except Exception as exc:  # Docker not available
+        pytest.skip(f"Docker unavailable: {exc}")
+
+
+@pytest.fixture(scope="session")
+def redis_url():
+    containers = pytest.importorskip("testcontainers.redis")
+    try:
+        with containers.RedisContainer("redis:7-alpine") as redis:
+            host, port = redis.get_container_host_ip(), redis.get_exposed_port(6379)
+            yield f"redis://{host}:{port}/0"
+    except Exception as exc:  # Docker not available
+        pytest.skip(f"Docker unavailable: {exc}")

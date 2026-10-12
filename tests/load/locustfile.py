@@ -11,5 +11,5 @@ class Candidate(HttpUser):
     def health(self) -> None:
         self.client.get("/healthz")
 
-    # TODO(spec-001 T-27): create interview with fixture docs → start → loop answers,
+    # TODO: create interview with fixture docs → start → loop answers,
     # asserting p95 next-question latency < 8 s (NFR-1).

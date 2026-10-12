@@ -28,10 +28,10 @@ flowchart TB
 | Architecture | `architecture/` | `architecture` | Pure core never imports LLM/DB/LangGraph; only `qualifai.llm` imports provider SDKs; API has no LLM calls | nothing | every push, PostToolUse hook |
 | Contract | `contract/` | `contract` | Recorded model outputs validate; off-scale / extra-field / invented-decision outputs are rejected | nothing | every push; re-record on prompt/model change |
 | Integration | `integration/` | `integration` | Schema, constraints (append-only turn uniqueness), repositories, checkpointer | Docker | every PR |
-| E2E | `e2e/` | `e2e` | Real LangGraph loop with in-memory checkpointer: natural end, hard stop, depth bounds, policy-chosen actions | nothing (HTTP-level e2e needs Docker, T-27) | every PR |
+| E2E | `e2e/` | `e2e` | Real LangGraph loop with in-memory checkpointer: natural end, hard stop, depth bounds, policy-chosen actions | nothing for the graph tests; the HTTP e2e (whole interview through the API, checkpoints, drafts, hard stop) needs Docker | every PR |
 | Security | `security/` | `security` | Unsupported roles/invalid docs refused; prompts carry injection rules; Claude hooks block secrets, destructive commands and architecture violations; (V2) sandbox escape smoke tests | nothing | every PR |
 | Load | `load/` | — | Next-question p95 < 8 s under concurrent interviews (NFR-1) | running stack | before demos |
-| Evals | `evals/` | `evals` | Judgement quality: strong > weak, bluffer caught ≥ 80%, score stability ≤ 1 level spread | a model | manual / nightly, on model or prompt change |
+| Evals | `evals/` | `evals` | Turn Analyzer on 5 hand-written answers (`python -m tests.evals.run_turn_analyzer`); judgement quality: strong > weak, bluffer caught ≥ 80%, score stability ≤ 1 level spread | a model | manual / nightly, on model or prompt change |
 
 ## Commands
 ```bash

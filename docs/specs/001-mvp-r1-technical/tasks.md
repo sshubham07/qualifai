@@ -27,13 +27,14 @@ Legend: `[x]` done in scaffold · `[ ]` open. Code TODOs reference these IDs.
 ## API & live loop (Phase 2)
 - [x] T-20 `POST /v1/interviews` (JSON: resume text + JD text + tier + experience range; intake, dedupe, enqueue; returns `meet_id`)
 - [x] T-21 `GET /v1/interviews/{id}` with `server_now`
-- [ ] T-22 `POST /start` (auth, window, schedule hard stop, first question = the kit's opening question; stop returning it from the status endpoint)
-- [ ] T-23 `POST /answers` (integrity events, resume graph, enqueue eval on end)
-- [ ] T-24 `hard_stop_job` (auto-submit draft, resume with time_up)
-- [ ] T-25 Postgres checkpointer wiring + graph version in state
-- [ ] T-26 TurnSink implementation (turns, turn_analyses, SSE)
-- [ ] T-27 E2E test: full interview with FakeLLM and FrozenClock
-
+- [x] T-22 `POST /start` (owner token if the interview was emailed, READY + not expired, window, hard stop scheduled at hard_end + 60 s, first question = the kit's opening question; the status endpoint no longer returns it)
+- [x] T-23 `POST /answers` (integrity events: pastes, time to first keystroke, idle time; graph resumed; latency credit stored; eval enqueued on end)
+- [x] T-24 `hard_stop_job` (auto-submits the draft as a cut-off answer, resumes with time_up; puts itself back if latency credit moved hard_end)
+- [x] T-25 Postgres checkpointer wiring + graph version in state
+- [x] T-26 TurnSink implementation (turns, turn_analyses, integrity events, SSE tokens over Redis pub/sub)
+- [x] T-27 E2E test: full interview over HTTP with FakeLLM, FrozenClock, Postgres and Redis
+- [x] T-28 Draft autosave (`PUT /draft` → Redis, cleared on submit) and `GET /room` for a reloaded page
+- [x] T-29 Interview room in the web app (streamed question, autosave, integrity signals, elapsed / ~target)
 ## Evaluation (Phase 3)
 - [ ] T-30 `evaluate_interview_job` → report JSON stored
 - [ ] T-31 Contract test for TopicEvaluation (quotes required)

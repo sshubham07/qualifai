@@ -2,30 +2,41 @@
 
 POST /v1/interviews               resume text + JD text + tier + experience → 202 + meet_id
 GET  /v1/interviews/{id}          status, failure reason, prep progress, server time (id = meet_id)
-GET  /v1/interviews/{id}/events   SSE: prep progress, streamed questions
 POST /v1/interviews/{id}/start    READY → IN_PROGRESS, returns first question
 POST /v1/interviews/{id}/answers  submit answer, returns next question
+PUT  /v1/interviews/{id}/draft    autosave the answer being typed
+GET  /v1/interviews/{id}/room     pending question + draft, for a reloaded page
+GET  /v1/interviews/{id}/events   SSE: the next question token by token, then `ended`
 GET  /v1/interviews/{id}/report   report JSON (HTML via ?format=html)
 """
 
+import json
+from collections.abc import AsyncIterator
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sse_starlette.sse import EventSourceResponse
 
-from qualifai.api.deps import Submit, get_clock, get_submit
+from qualifai.api.deps import Submit, get_clock, get_live, get_room, get_submit
 from qualifai.api.schemas import (
     AnswerIn,
+    DraftIn,
     InterviewAccepted,
     InterviewIn,
     InterviewStatusOut,
     NextQuestionOut,
+    StartIn,
 )
+from qualifai.container import LiveRuntime
 from qualifai.db.models import Interview, InterviewEvent, InterviewKit
 from qualifai.db.session import get_session
 from qualifai.domain.clock import Clock
 from qualifai.domain.enums import InterviewStatus, RoleFamily, RoundType
+from qualifai.interview import room
+from qualifai.storage.live import subscribe
 
 router = APIRouter(prefix="/interviews", tags=["interviews"])
 
@@ -71,9 +82,6 @@ async def get_interview(
         failure_code=interview.failure_code,
         failure_reason=interview.failure_reason,
         progress=await _prep_steps(session, interview_id) or (kit.prep_progress if kit else []),
-        opening_question=kit.profile.get("opening_question")
-        if kit and status_ is InterviewStatus.READY
-        else None,
         expires_at=interview.expires_at,
         started_at=interview.started_at,
         target_end_at=interview.target_end_at,
@@ -81,18 +89,55 @@ async def get_interview(
     )
 
 
+def _next(turn: room.RoomTurn, clock: Clock) -> NextQuestionOut:
+    return NextQuestionOut(**turn.model_dump(), server_now=clock.now())
+
+
 @router.post("/{interview_id}/start", response_model=NextQuestionOut)
-async def start_interview(interview_id: UUID) -> NextQuestionOut:
-    # TODO(spec-001 T-22): check owner + READY + not expired; set TimeWindow; schedule hard-stop
-    # job at hard_end + grace; InterviewService.start(); return first question.
-    raise NotImplementedError
+async def start_interview(
+    interview_id: UUID,
+    body: StartIn | None = None,
+    deps: room.RoomDeps = Depends(get_room),
+) -> NextQuestionOut:
+    turn = await room.start_interview(deps, interview_id, body.token if body else None)
+    return _next(turn, deps.clock)
 
 
 @router.post("/{interview_id}/answers", response_model=NextQuestionOut)
-async def submit_answer(interview_id: UUID, body: AnswerIn) -> NextQuestionOut:
-    # TODO(spec-001 T-23): record integrity events (paste, timing), compute answer_seconds,
-    # InterviewService.submit_answer(); if ended → enqueue evaluation job.
-    raise NotImplementedError
+async def submit_answer(
+    interview_id: UUID, body: AnswerIn, deps: room.RoomDeps = Depends(get_room)
+) -> NextQuestionOut:
+    return _next(await room.submit_answer(deps, interview_id, body), deps.clock)
+
+
+@router.put("/{interview_id}/draft", status_code=status.HTTP_204_NO_CONTENT)
+async def save_draft(
+    interview_id: UUID, body: DraftIn, deps: room.RoomDeps = Depends(get_room)
+) -> None:
+    await room.save_draft(deps, interview_id, body)
+
+
+@router.get("/{interview_id}/room", response_model=NextQuestionOut)
+async def rejoin_room(
+    interview_id: UUID, deps: room.RoomDeps = Depends(get_room)
+) -> NextQuestionOut:
+    return _next(await room.rejoin(deps, interview_id), deps.clock)
+
+
+async def sse_frames(events: AsyncIterator[dict[str, Any]]) -> AsyncIterator[dict[str, str]]:
+    """Live events → SSE frames: the event's name, and the rest of it as JSON data."""
+    async for event in events:
+        data = {k: v for k, v in event.items() if k != "event"}
+        yield {"event": event["event"], "data": json.dumps(data)}
+
+
+@router.get("/{interview_id}/events")
+async def interview_events(
+    interview_id: UUID, live: LiveRuntime = Depends(get_live)
+) -> EventSourceResponse:
+    """`token` events while a question is being phrased, `question` once it is committed,
+    `ended` at the end. Only a nicety: POST /answers returns the same question."""
+    return EventSourceResponse(sse_frames(subscribe(live.redis, interview_id)))
 
 
 @router.get("/{interview_id}/report")
